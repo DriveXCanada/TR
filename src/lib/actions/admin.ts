@@ -1,6 +1,6 @@
 'use server';
 
-import { and, eq } from 'drizzle-orm';
+import { and, eq, sql } from 'drizzle-orm';
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 import { z } from 'zod';
@@ -35,7 +35,8 @@ export async function createManager(_prev: AdminState, formData: FormData): Prom
 
   const db = getDb();
   const username = parsed.data.username.toLowerCase();
-  const clash = await db.select().from(schema.users).where(eq(schema.users.username, username)).limit(1);
+  const clash = await db.select().from(schema.users)
+    .where(sql`lower(${schema.users.username}) = ${username}`).limit(1);
   if (clash.length > 0) return { error: `The username "${username}" is already taken.` };
 
   await db.insert(schema.users).values({

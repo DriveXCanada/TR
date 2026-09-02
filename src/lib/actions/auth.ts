@@ -1,6 +1,6 @@
 'use server';
 
-import { eq } from 'drizzle-orm';
+import { sql } from 'drizzle-orm';
 import { redirect } from 'next/navigation';
 import { z } from 'zod';
 import { getDb, schema } from '@/lib/db';
@@ -33,10 +33,17 @@ export async function signIn(_prev: AuthState, formData: FormData): Promise<Auth
   // Distinguish "wrong credentials" from "this server is broken". Telling a
   // lead their PIN is wrong when the database is unreachable sends them hunting
   // for the wrong problem in the middle of a deployment.
+  // Case-insensitive. Phone keyboards capitalise the first letter, and people
+  // type their own name capitalised — an account stored as "ben" then rejects
+  // "Ben" as if the PIN were wrong, which is impossible to diagnose from the
+  // outside. Parameterised, so the lowercasing is done by Postgres, not by
+  // string interpolation.
   let user: typeof schema.users.$inferSelect | undefined;
   try {
     const found = await getDb().select().from(schema.users)
-      .where(eq(schema.users.username, parsed.data.username)).limit(1);
+      .where(sql`lower(${schema.users.username}) = ${parsed.data.username.toLowerCase()}`)
+      .orderBy(schema.users.createdAt)
+      .limit(1);
     user = found[0];
   } catch {
     const probe = await probeDatabase();

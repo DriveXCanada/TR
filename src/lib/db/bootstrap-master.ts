@@ -7,7 +7,8 @@ import { getDb, schema } from './index';
 import { hashPin, MIN_PIN_LENGTH } from '../auth/password';
 
 export async function ensureMaster(): Promise<string> {
-  const username = process.env.MASTER_USERNAME?.trim();
+  // Normalised on write so sign-in's case-insensitive lookup always matches.
+  const username = process.env.MASTER_USERNAME?.trim().toLowerCase();
   const pin = process.env.MASTER_PIN?.trim();
   if (!username || !pin) return 'MASTER_USERNAME / MASTER_PIN not set — skipping.';
   if (pin.length < MIN_PIN_LENGTH) return `MASTER_PIN must be at least ${MIN_PIN_LENGTH} characters — skipping.`;

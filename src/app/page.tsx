@@ -1,7 +1,6 @@
 import Link from 'next/link';
-import { desc } from 'drizzle-orm';
 import { requireSession } from '@/lib/auth/current';
-import { getDb, schema } from '@/lib/db';
+import { listOperations } from '@/lib/data/access';
 import { ConceptBanner, PoweredByDriveX, Wordmark } from '@/components/Brand';
 import { signOut } from '@/lib/actions/auth';
 import { probeDatabase } from '@/lib/db/probe';
@@ -16,8 +15,11 @@ export default async function OperationsPage(): Promise<React.ReactNode> {
   const probe = await probeDatabase();
   if (probe.state !== 'ready') return <SetupError message={probe.message} />;
 
-  const db = getDb();
-  const ops = await db.select().from(schema.operations).orderBy(desc(schema.operations.startDate));
+  // Membership-filtered. Listing every operation let a manager see the name,
+  // location and dates of operations they are not on, and hand them a link that
+  // could only 404.
+  const ops = (await listOperations(session))
+    .sort((a, b) => b.startDate.localeCompare(a.startDate));
 
   return (
     <main className="min-h-screen">
@@ -59,7 +61,7 @@ export default async function OperationsPage(): Promise<React.ReactNode> {
                     <span className="text-xs uppercase tracking-wide text-tr-grey">{op.status}</span>
                   </div>
                   <p className="mt-1 text-sm text-tr-grey">
-                    {op.location} · {op.startDate} → {op.endDate} · {op.currency} {op.perPersonPerDay}/person/day
+                    {op.location} · {op.startDate} → {op.endDate} · {op.currency} {op.perPersonPerDay.toFixed(2)}/person/day
                   </p>
                 </Link>
               </li>
