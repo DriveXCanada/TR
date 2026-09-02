@@ -131,6 +131,95 @@ await step('check: a safe dish is CLEAR TO SERVE', async () => {
   return 'CLEAR';
 });
 
+
+await step('menu: lunch offers ONLY packed options', async () => {
+  await go(`/op/${OP}/menu?day=2026-03-02`);
+  await page.waitForSelector('main');
+  const lunchSection = page.locator('section', { has: page.locator('h2', { hasText: /^lunch$/i }) }).first();
+  const options = await lunchSection.locator('select[name=recipeId] option').allInnerTexts();
+  const named = options.filter((o) => !/choose/i.test(o));
+  if (named.length === 0) throw new Error('no lunch options offered');
+  const hot = named.filter((o) => /chilli|roast chicken|pasta bake|pancakes/i.test(o));
+  if (hot.length > 0) throw new Error(`hot dishes offered for the packed lunch: ${hot.join(', ')}`);
+  return `${named.length} pack options, no hot dishes`;
+});
+
+await step('menu: add then remove a dish', async () => {
+  const supperSection = () =>
+    page.locator('section', { has: page.locator('h2', { hasText: /^supper$/i }) }).first();
+  // Count planned dishes by their Remove button — the empty state is also an <li>.
+  const planned = () => supperSection().locator('li:has(button:has-text("Remove"))').count();
+
+  await go(`/op/${OP}/menu?day=2026-03-06`);
+  await page.waitForSelector('main');
+  const before = await planned();
+
+  await supperSection().locator('select[name=recipeId]').selectOption({ index: 1 });
+  await supperSection().locator('button:has-text("Add")').click();
+  await page.waitForTimeout(2000);
+  const mid = await planned();
+  if (mid !== before + 1) throw new Error(`dish not added (${before} -> ${mid})`);
+
+  await supperSection().locator('button:has-text("Remove")').first().click();
+  await page.waitForTimeout(2000);
+  const end = await planned();
+  if (end !== before) throw new Error(`dish not removed (${mid} -> ${end}, expected ${before})`);
+  return `added and removed (${before} -> ${mid} -> ${end})`;
+});
+
+await step('menu: planned dishes carry their conflict chips', async () => {
+  await go(`/op/${OP}/menu?day=2026-03-02`);
+  await page.waitForSelector('main');
+  const t = await body();
+  if (!/peanuts/i.test(t)) throw new Error('PB&J in the lunch slot did not surface a peanuts chip');
+  return 'peanuts flagged on the packed lunch';
+});
+
+await step('shopping: consolidates, prices and compares to budget', async () => {
+  await go(`/op/${OP}/shopping`);
+  await page.waitForSelector('main');
+  const t = await body();
+  if (!/purchase cost/i.test(t)) throw new Error('no purchase cost');
+  if (!/operation budget/i.test(t)) throw new Error('no budget comparison');
+  const rows = await page.locator('table tbody tr').count();
+  if (rows < 5) throw new Error(`expected a consolidated list, got ${rows} rows`);
+  return `${rows} ingredient lines`;
+});
+
+await step('shopping: CSV export downloads', async () => {
+  // Fetch from inside the page: the session cookie is Secure, and Playwright's
+  // Node-side request client will not send it over plain HTTP.
+  const out = await page.evaluate(async (url) => {
+    const r = await fetch(url, { credentials: 'include' });
+    return { status: r.status, text: await r.text() };
+  }, `${BASE}/api/op/${OP}/shopping.csv`);
+  if (out.status !== 200) throw new Error(`HTTP ${out.status}`);
+  if (!out.text.startsWith('Category,Ingredient')) throw new Error('unexpected CSV header');
+  return `${out.text.split('\n').length} CSV rows`;
+});
+
+await step('recipes: page lists the book and can add a recipe', async () => {
+  await go(`/op/${OP}/recipes`);
+  await page.waitForSelector('main');
+  const before = await page.locator('text=/\\/serving/').count();
+  await page.fill('input[name=name]', 'E2E Test Loaf');
+  await page.fill('input[name=tags]', 'pack, vegetarian');
+  await page.locator('button:has-text("Save recipe")').click();
+  await page.waitForTimeout(1500);
+  const t = await body();
+  if (!t.includes('E2E Test Loaf')) throw new Error('new recipe not listed');
+  return `recipe created (was ${before} recipes)`;
+});
+
+await step('recipes: a new pack recipe becomes selectable at lunch', async () => {
+  await go(`/op/${OP}/menu?day=2026-03-02`);
+  await page.waitForSelector('main');
+  const lunch = page.locator('section', { has: page.locator('h2', { hasText: /^lunch$/i }) }).first();
+  const options = await lunch.locator('select[name=recipeId] option').allInnerTexts();
+  if (!options.some((o) => o.includes('E2E Test Loaf'))) throw new Error('pack-tagged recipe not offered at lunch');
+  return 'pack tag flows through to the lunch picker';
+});
+
 await step('an unauthenticated visitor cannot reach the board', async () => {
   const ctx = await browser.newContext();
   const anon = await ctx.newPage();
