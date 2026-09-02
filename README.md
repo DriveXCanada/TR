@@ -63,8 +63,16 @@ One project = **this app + a Postgres plugin**.
    - `AUTH_URL` → the public Railway URL (makes the kiosk QR absolute)
    - `MASTER_USERNAME`, `MASTER_PIN` → provisions the master account on boot
    - *(optional)* `ANTHROPIC_API_KEY`, `AI_MODEL`
-4. **Deploy.** `railway.json` runs migrations as a `preDeployCommand`, then
-   starts the app on `$PORT`.
+4. **Deploy.** The start command is `npm run start:railway`, which applies
+   migrations and then boots on `$PORT`.
+
+> **Why migrations run in the start command, not a `preDeployCommand`:** a
+> `preDeployCommand` in `railway.json` was silently not executed on a real
+> deployment — the app came up against an empty database and only failed when
+> someone tried to sign in. The start command always runs. Migrations are
+> idempotent, so re-running them on every boot costs about a second, and a
+> failed migration stops the container from starting rather than serving a
+> console that cannot reach its data.
 
 **Healthcheck** is `/api/health`. It answers 200 whenever the server can serve,
 reporting database state without gating on it — migrations run in the release
