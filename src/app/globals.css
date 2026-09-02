@@ -1,0 +1,27 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root { color-scheme: light; }
+
+body {
+  @apply bg-tr-mist text-tr-ink antialiased;
+}
+
+/* Severity is meaning, not decoration — these survive any rebrand. */
+.chip { @apply inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-xs font-medium; }
+.chip-severe { @apply border-severe-border bg-severe-bg text-severe; }
+.chip-intolerance { @apply border-intolerance-border bg-intolerance-bg text-intolerance; }
+.chip-preference { @apply border-preference-border bg-preference-bg text-preference; }
+
+.card { @apply rounded-card border border-black/10 bg-white shadow-sm; }
+.btn { @apply inline-flex items-center justify-center rounded-md px-3 py-2 text-sm font-semibold transition disabled:opacity-50; }
+.btn-primary { @apply btn bg-tr-red text-white hover:bg-tr-red-dark; }
+.btn-secondary { @apply btn border border-black/15 bg-white text-tr-ink hover:bg-tr-mist; }
+.input { @apply w-full rounded-md border border-black/15 px-3 py-2 text-sm outline-none focus:border-tr-red focus:ring-1 focus:ring-tr-red; }
+.label { @apply mb-1 block text-sm font-medium text-tr-ink; }
+
+@media print {
+  .no-print { display: none !important; }
+  body { @apply bg-white; }
+}
