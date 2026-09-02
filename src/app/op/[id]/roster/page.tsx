@@ -1,10 +1,12 @@
 import { requireSession } from '@/lib/auth/current';
 import { loadSnapshot } from '@/lib/data/access';
 import { resolveSelection } from '@/lib/view-params';
-import { isPresentForSlot, presenceWarnings, PRESENCE_WARNING_TEXT } from '@/lib/presence';
+import { isPresentForSlot, presenceWarnings, PRESENCE_WARNING_TEXT, daysBetween } from '@/lib/presence';
 import { ICS_ROLES, SLOTS, SEVERITY_RANK } from '@/lib/domain';
 import { SlotSelector } from '@/components/SlotSelector';
 import { Card, SeverityChip, Empty } from '@/components/ui';
+import { addRestriction, updateStay } from '@/lib/actions/roster';
+import { AddVolunteerForm } from './AddVolunteerForm';
 
 export const dynamic = 'force-dynamic';
 
@@ -30,6 +32,10 @@ export default async function RosterPage(
       <p className="text-sm text-tr-grey">
         {volunteers.length} on the roster. Highlighted rows are on site for <strong>{day} {slot}</strong>.
       </p>
+
+      <Card title="Add a volunteer" subtitle="For anyone who cannot use the kiosk QR — walk-ins, no phone, or a lead recording on their behalf.">
+        <AddVolunteerForm operationId={id} days={daysBetween(operation.startDate, operation.endDate)} />
+      </Card>
 
       {byRole.length === 0 ? <Empty>No volunteers yet. Share the kiosk QR from Settings.</Empty> : byRole.map((group) => (
         <Card key={group.role} title={group.role} subtitle={`${group.people.length} assigned`}>
@@ -57,6 +63,47 @@ export default async function RosterPage(
                   {warnings.map((w) => (
                     <p key={w} className="mt-1 text-xs text-intolerance">{PRESENCE_WARNING_TEXT[w]}</p>
                   ))}
+
+                  <details className="no-print mt-2">
+                    <summary className="cursor-pointer text-xs text-tr-grey underline">Edit</summary>
+                    <div className="mt-2 space-y-3 rounded-md border border-black/10 p-3">
+                      <form action={updateStay} className="flex flex-wrap items-end gap-2">
+                        <input type="hidden" name="operationId" value={id} />
+                        <input type="hidden" name="volunteerId" value={v.id} />
+                        <label className="text-xs"><span className="label">Arrives</span>
+                          <input name="arriveDate" className="input w-36 py-1 text-sm" defaultValue={v.arriveDate ?? ''} placeholder="YYYY-MM-DD" /></label>
+                        <label className="text-xs"><span className="label">Meal</span>
+                          <select name="arriveMeal" className="input w-28 py-1 text-sm" defaultValue={v.arriveMeal ?? ''}>
+                            <option value="">Unknown</option>
+                            {operation.mealSchedule.map((m) => <option key={m} value={m}>{m}</option>)}
+                          </select></label>
+                        <label className="text-xs"><span className="label">Departs</span>
+                          <input name="departDate" className="input w-36 py-1 text-sm" defaultValue={v.departDate ?? ''} placeholder="YYYY-MM-DD" /></label>
+                        <label className="text-xs"><span className="label">Meal</span>
+                          <select name="departMeal" className="input w-28 py-1 text-sm" defaultValue={v.departMeal ?? ''}>
+                            <option value="">Unknown</option>
+                            {operation.mealSchedule.map((m) => <option key={m} value={m}>{m}</option>)}
+                          </select></label>
+                        <button type="submit" className="btn-secondary px-2 py-1 text-xs">Save stay</button>
+                      </form>
+
+                      <form action={addRestriction} className="flex flex-wrap items-end gap-2">
+                        <input type="hidden" name="operationId" value={id} />
+                        <input type="hidden" name="volunteerId" value={v.id} />
+                        <label className="text-xs"><span className="label">Add restriction</span>
+                          <input name="key" className="input w-36 py-1 text-sm" placeholder="shellfish" required /></label>
+                        <label className="text-xs"><span className="label">Severity</span>
+                          <select name="severity" className="input w-32 py-1 text-sm" defaultValue="severe">
+                            <option value="severe">severe</option>
+                            <option value="intolerance">intolerance</option>
+                            <option value="preference">preference</option>
+                          </select></label>
+                        <label className="text-xs"><span className="label">Note</span>
+                          <input name="note" className="input w-44 py-1 text-sm" /></label>
+                        <button type="submit" className="btn-secondary px-2 py-1 text-xs">Add</button>
+                      </form>
+                    </div>
+                  </details>
                 </li>
               );
             })}

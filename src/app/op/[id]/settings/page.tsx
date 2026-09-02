@@ -1,9 +1,12 @@
 import QRCode from 'qrcode';
+import { eq } from 'drizzle-orm';
 import { requireSession } from '@/lib/auth/current';
 import { loadSnapshot } from '@/lib/data/access';
+import { getDb, schema } from '@/lib/db';
 import { rotateKioskToken, updateSettings } from '@/lib/actions/settings';
 import { Card, money } from '@/components/ui';
 import { PurgePanel } from './PurgePanel';
+import { TeamPanel, type Assignable, type TeamMember } from './TeamPanel';
 
 export const dynamic = 'force-dynamic';
 
@@ -18,6 +21,29 @@ export default async function SettingsPage(
   const session = await requireSession();
   const { id } = await params;
   const { operation, volunteers } = await loadSnapshot(id, session);
+
+  const db = getDb();
+  const [allUsers, memberships] = await Promise.all([
+    db.select().from(schema.users),
+    db.select().from(schema.operationMembers).where(eq(schema.operationMembers.operationId, id)),
+  ]);
+  const userById = new Map(allUsers.map((u) => [u.id, u]));
+  const members: TeamMember[] = memberships.flatMap((m) => {
+    const user = userById.get(m.userId);
+    if (user === undefined) return [];
+    return [{
+      userId: user.id, username: user.username, name: user.name,
+      role: m.role, isSelf: user.id === session.userId,
+    }];
+  }).sort((a, b) => a.role.localeCompare(b.role) || a.name.localeCompare(b.name));
+
+  const assignedIds = new Set(memberships.map((m) => m.userId));
+  const assignable: Assignable[] = allUsers
+    .filter((u) => u.isActive && !assignedIds.has(u.id))
+    .map((u) => ({ id: u.id, username: u.username, name: u.name }))
+    .sort((a, b) => a.name.localeCompare(b.name));
+  const canManage = session.isMaster
+    || memberships.some((m) => m.userId === session.userId && m.role === 'lead');
 
   const joinUrl = `${baseUrl()}/join/${operation.kioskToken}`;
   const qr = await QRCode.toDataURL(joinUrl, { width: 320, margin: 1 });
@@ -72,6 +98,10 @@ export default async function SettingsPage(
           {operation.mealSchedule.join(' → ')}. Lunch is a packed field lunch: the planner offers only
           cold pack options for it.
         </p>
+      </Card>
+
+      <Card title="Team" subtitle="Who can see this operation.">
+        <TeamPanel operationId={id} members={members} assignable={assignable} canManage={canManage} />
       </Card>
 
       <Card title="Export">
