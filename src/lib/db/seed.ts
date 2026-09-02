@@ -5,7 +5,6 @@
  * Everything it writes is invented. See seed-data.ts.
  */
 import { eq } from 'drizzle-orm';
-import { config } from 'dotenv';
 import { getDb, schema } from './index';
 import { hashPin } from '../auth/password';
 import { daysBetween } from '../presence';
@@ -193,13 +192,4 @@ function randomToken(): string {
   const bytes = new Uint8Array(16);
   crypto.getRandomValues(bytes);
   return [...bytes].map((b) => b.toString(16).padStart(2, '0')).join('');
-}
-
-// Allow `npm run db:seed` to run this file directly.
-if (process.argv[1]?.includes('seed')) {
-  config({ path: '.env.local' });
-  config();
-  seed()
-    .then((msg) => { console.log(msg); process.exit(0); })
-    .catch((err) => { console.error('Seed failed:', err); process.exit(1); });
 }
