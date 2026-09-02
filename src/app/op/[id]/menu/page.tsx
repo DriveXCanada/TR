@@ -9,6 +9,8 @@ import { checkConflicts } from '@/lib/conflict';
 import { addDish, removeDish, setServings } from '@/lib/actions/menu';
 import { SlotSelector } from '@/components/SlotSelector';
 import { Card, Stat, SeverityChip, money } from '@/components/ui';
+import { WeekOverview } from './WeekOverview';
+import { CopyDayForm, StarterLibraryButton } from './DayTools';
 
 export const dynamic = 'force-dynamic';
 
@@ -32,9 +34,29 @@ export default async function MenuPage(
     operation.perPersonPerDay, operation.currency, operation.mealSchedule);
   const recipeById = new Map(recipes.map((r) => [r.id, r]));
 
+  // A brand-new operation has no catalogue, so the planner can offer nothing.
+  // Say so and give a one-click way out rather than showing empty pickers.
+  if (recipes.length === 0) {
+    return (
+      <div className="space-y-6">
+        <Card title="Nothing to plan with yet" subtitle="This operation has no recipes or ingredients.">
+          <p className="mb-4 text-sm text-tr-ink">
+            The planner needs a recipe book before it can do anything. Load the standard field-kitchen
+            library to start planning immediately, or build your own from the <strong>Recipes</strong> tab.
+          </p>
+          <StarterLibraryButton operationId={id} recipeCount={0} />
+        </Card>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
       <SlotSelector days={days} slots={SLOTS} day={day} slot="supper" />
+
+      <Card title="The whole operation" subtitle="Every day and slot at a glance. Click a date to edit it.">
+        <WeekOverview opId={id} days={costs} selectedDay={day} currency={operation.currency} />
+      </Card>
 
       <div className="grid gap-3 sm:grid-cols-3">
         <Stat label="Day food cost" value={money(today?.cost ?? 0, operation.currency)}
@@ -50,6 +72,10 @@ export default async function MenuPage(
           {day} is over its daily budget by {money(today.cost - today.budget, operation.currency)}.
         </p>
       )}
+
+      <Card title={`Roll ${day} forward`} subtitle="Plan one good day, then apply it across the operation.">
+        <CopyDayForm operationId={id} fromDay={day} days={allDays} />
+      </Card>
 
       {SLOTS.map((slot) => {
         const slotCost = today?.slots.find((s) => s.slot === slot);

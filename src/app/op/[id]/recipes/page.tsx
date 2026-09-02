@@ -4,6 +4,7 @@ import { RECIPE_CATEGORIES, PACK_TAG } from '@/lib/domain';
 import { recipeCostPerServing } from '@/lib/menu-cost';
 import { createRecipe, createIngredient, addRecipeIngredient, deleteRecipe } from '@/lib/actions/recipes';
 import { Card, Empty, money } from '@/components/ui';
+import { StarterLibraryButton } from '../menu/DayTools';
 
 export const dynamic = 'force-dynamic';
 
@@ -16,6 +17,13 @@ export default async function RecipesPage(
 
   return (
     <div className="space-y-6">
+      <Card
+        title="Starter library"
+        subtitle="A priced catalogue and recipe book for a field kitchen with limited equipment."
+      >
+        <StarterLibraryButton operationId={id} recipeCount={recipes.length} />
+      </Card>
+
       <Card title="New recipe" subtitle={`Tag a recipe "${PACK_TAG}" to make it available for the packed field lunch.`}>
         <form action={createRecipe} className="grid gap-3 sm:grid-cols-2">
           <input type="hidden" name="operationId" value={id} />
