@@ -6,6 +6,7 @@ import { z } from 'zod';
 import { getDb, schema } from '@/lib/db';
 import { verifyPin } from '@/lib/auth/password';
 import { createSession, destroySession, isAuthConfigured } from '@/lib/auth/session';
+import { probeDatabase } from '@/lib/db/probe';
 
 const credentials = z.object({
   username: z.string().trim().min(1, 'Enter your username.'),
@@ -29,10 +30,18 @@ export async function signIn(_prev: AuthState, formData: FormData): Promise<Auth
     return { error: parsed.error.issues[0]?.message ?? 'Invalid sign-in.' };
   }
 
-  const db = getDb();
-  const found = await db.select().from(schema.users)
-    .where(eq(schema.users.username, parsed.data.username)).limit(1);
-  const user = found[0];
+  // Distinguish "wrong credentials" from "this server is broken". Telling a
+  // lead their PIN is wrong when the database is unreachable sends them hunting
+  // for the wrong problem in the middle of a deployment.
+  let user: typeof schema.users.$inferSelect | undefined;
+  try {
+    const found = await getDb().select().from(schema.users)
+      .where(eq(schema.users.username, parsed.data.username)).limit(1);
+    user = found[0];
+  } catch {
+    const probe = await probeDatabase();
+    return { error: `Sign-in is unavailable. ${probe.message}` };
+  }
 
   // Same message either way — never confirm which usernames exist.
   const rejection: AuthState = { error: 'Incorrect username or PIN.' };

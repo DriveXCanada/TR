@@ -4,11 +4,17 @@ import { requireSession } from '@/lib/auth/current';
 import { getDb, schema } from '@/lib/db';
 import { ConceptBanner, PoweredByDriveX, Wordmark } from '@/components/Brand';
 import { signOut } from '@/lib/actions/auth';
+import { probeDatabase } from '@/lib/db/probe';
+import { SetupError } from '@/components/SetupError';
 
 export const dynamic = 'force-dynamic';
 
 export default async function OperationsPage(): Promise<React.ReactNode> {
   const session = await requireSession();
+
+  const probe = await probeDatabase();
+  if (probe.state !== 'ready') return <SetupError message={probe.message} />;
+
   const db = getDb();
   const ops = await db.select().from(schema.operations).orderBy(desc(schema.operations.startDate));
 
