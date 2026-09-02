@@ -15,6 +15,7 @@ const OP = process.env.OP_ID;
 const USER = process.env.E2E_USER ?? 'ful';
 const PIN = process.env.E2E_PIN ?? '2468';
 const EXECUTABLE = process.env.CHROMIUM_PATH;
+const KIOSK = process.env.KIOSK_TOKEN;
 
 if (OP === undefined) {
   console.error('OP_ID is required — the uuid of a seeded operation.');
@@ -219,6 +220,114 @@ await step('recipes: a new pack recipe becomes selectable at lunch', async () =>
   if (!options.some((o) => o.includes('E2E Test Loaf'))) throw new Error('pack-tagged recipe not offered at lunch');
   return 'pack tag flows through to the lunch picker';
 });
+
+
+if (KIOSK !== undefined) {
+  await step('join: an invalid kiosk token 404s without leaking', async () => {
+    const res = await page.goto(`${BASE}/join/deadbeefdeadbeefdead`, { waitUntil: 'domcontentloaded' });
+    if (res.status() !== 404) throw new Error(`expected 404, got ${res.status()}`);
+    return '404';
+  });
+
+  await step('join: a volunteer signs in through the QR wizard', async () => {
+    const ctx = await browser.newContext();
+    const kiosk = await ctx.newPage();
+    await kiosk.goto(`${BASE}/join/${KIOSK}`, { waitUntil: 'domcontentloaded' });
+
+    // Every step stays mounted (the form must submit all fields at once) and
+    // React reuses the footer button node when Next becomes Submit. So advance
+    // one step at a time, waiting for the next heading to actually be visible,
+    // rather than firing six clicks at the same element.
+    const next = async (heading) => {
+      await kiosk.click('[data-testid=wizard-next]');
+      await kiosk.waitForSelector(`h2:has-text("${heading}")`, { state: 'visible', timeout: 10000 });
+    };
+
+    await kiosk.check('input[name=consent]');
+    await next('Who are you?');
+
+    await kiosk.fill('input[name=firstName]', 'Wendeline');
+    await kiosk.fill('input[name=lastName]', 'Quartermain');
+    await kiosk.selectOption('select[name=icsRole]', 'Core Ops');
+    await next('Allergies, intolerances, diet');
+
+    // Severe shellfish allergy, chosen by tap then escalated to severe.
+    await kiosk.click('button:has-text("Shellfish")');
+    await kiosk.selectOption('select[aria-label="How serious is shellfish?"]', 'severe');
+    await next('Auto-injector');
+
+    await kiosk.check('input[name=epipenCarrying]');
+    await kiosk.fill('input[name=epipenLocation]', 'Left hip pouch, orange case');
+    await next('Which meals are you on site for?');
+
+    // Arrives 4 March at breakfast, leaves after LUNCH on 6 March.
+    await kiosk.selectOption('select[name=arriveDate]', '2026-03-04');
+    await kiosk.selectOption('select[name=arriveMeal]', 'breakfast');
+    await kiosk.selectOption('select[name=departDate]', '2026-03-06');
+    await kiosk.selectOption('select[name=departMeal]', 'lunch');
+    await next('Preferences');
+    await next('Check and send');
+
+    // The form unmounts on success, so an in-page click avoids Playwright
+    // retrying an element that is gone precisely because the click worked.
+    await kiosk.waitForSelector('[data-testid=wizard-submit]', { state: 'visible' });
+    await kiosk.evaluate(() => {
+      const button = document.querySelector('[data-testid=wizard-submit]');
+      if (button === null) throw new Error('submit button not found');
+      button.click();
+    });
+    await kiosk.waitForSelector('text=/on the roster/i', { timeout: 20000 });
+    await ctx.close();
+    return 'signed in with a severe allergy and a lunch departure';
+  });
+
+  await step('join: she appears at LUNCH on her departure day, flagged severe', async () => {
+    await go(`/op/${OP}?day=2026-03-06&slot=lunch`);
+    await page.waitForSelector('text=/on site/i');
+    const t = await body();
+    if (!t.includes('Wendeline')) throw new Error('kiosk sign-in did not reach the board');
+    if (!/shellfish/i.test(t)) throw new Error('severe restriction not on the board');
+    if (!/left hip pouch/i.test(t)) throw new Error('auto-injector location not shown');
+    return 'present, severe shellfish, auto-injector location shown';
+  });
+
+  await step('join: she is GONE from supper the same day', async () => {
+    await go(`/op/${OP}?day=2026-03-06&slot=supper`);
+    await page.waitForSelector('text=/on site/i');
+    if ((await body()).includes('Wendeline')) throw new Error('still counted at supper after a lunch departure');
+    return 'correctly absent';
+  });
+
+  await step('join: she is absent before she arrives', async () => {
+    await go(`/op/${OP}?day=2026-03-03&slot=supper`);
+    await page.waitForSelector('text=/on site/i');
+    if ((await body()).includes('Wendeline')) throw new Error('counted before arrival');
+    return 'correctly absent';
+  });
+
+  await step('check: shellfish now trips a HOLD at her lunch', async () => {
+    await go(`/op/${OP}/check?day=2026-03-06&slot=lunch`);
+    await page.waitForSelector('#dish');
+    await page.fill('#dish', 'seafood chowder with shrimp and clams');
+    await page.click('[data-testid=run-check]');
+    await page.waitForSelector('text=/HOLD/i', { timeout: 20000 });
+    await page.waitForSelector('text=/Wendeline Quartermain/', { timeout: 20000 });
+    return 'HOLD naming the volunteer who just signed in';
+  });
+
+  await step('settings: kiosk QR renders and roster CSV includes her', async () => {
+    await go(`/op/${OP}/settings`);
+    await page.waitForSelector('img[alt*="QR"]');
+    const out = await page.evaluate(async (url) => {
+      const r = await fetch(url, { credentials: 'include' });
+      return { status: r.status, text: await r.text() };
+    }, `${BASE}/api/op/${OP}/roster.csv`);
+    if (out.status !== 200) throw new Error(`roster CSV HTTP ${out.status}`);
+    if (!out.text.includes('Quartermain')) throw new Error('new volunteer missing from the roster export');
+    if (!/SEVERE:shellfish/.test(out.text)) throw new Error('severity missing from the roster export');
+    return 'QR rendered, CSV carries the severe flag';
+  });
+}
 
 await step('an unauthenticated visitor cannot reach the board', async () => {
   const ctx = await browser.newContext();
