@@ -52,7 +52,13 @@ One project = **this app + a Postgres plugin**.
    enable **Wait for CI**.
 2. **New → Database → PostgreSQL** in the same project.
 3. On the app service set **Variables**:
-   - `DATABASE_URL` → `${{Postgres.DATABASE_URL}}`
+   - `DATABASE_URL` → `${{Postgres.DATABASE_URL}}` — the part before the dot is
+     the **Postgres service's name**, which Railway may have generated as
+     something like `Postgres-Ad94`. Type `${{` in the value field and pick from
+     Railway's autocomplete rather than pasting, or rename the service to
+     `Postgres` first. A name that does not match resolves to nothing: the
+     literal `${{...}}` string is passed through as the connection URL and the
+     release fails at the migration step.
    - `AUTH_SECRET` → `openssl rand -base64 48`
    - `AUTH_URL` → the public Railway URL (makes the kiosk QR absolute)
    - `MASTER_USERNAME`, `MASTER_PIN` → provisions the master account on boot
