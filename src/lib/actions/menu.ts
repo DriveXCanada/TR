@@ -64,8 +64,8 @@ export async function addDish(formData: FormData): Promise<void> {
 
   const id = await slotId(parsed.data.operationId, parsed.data.day, parsed.data.slot);
   await db.insert(schema.menuSlotItems).values({ menuSlotId: id, recipeId: found.id, adHocName: null });
-  revalidatePath(`/op/${parsed.data.operationId}/menu`);
-  revalidatePath(`/op/${parsed.data.operationId}/shopping`);
+  revalidatePath(`/op/${parsed.data.operationId}/food/menu`);
+  revalidatePath(`/op/${parsed.data.operationId}/food/shopping`);
 }
 
 const removeSchema = z.object({
@@ -93,8 +93,8 @@ export async function removeDish(formData: FormData): Promise<void> {
   if (rows.length === 0) return;
 
   await db.delete(schema.menuSlotItems).where(eq(schema.menuSlotItems.id, parsed.data.itemId));
-  revalidatePath(`/op/${parsed.data.operationId}/menu`);
-  revalidatePath(`/op/${parsed.data.operationId}/shopping`);
+  revalidatePath(`/op/${parsed.data.operationId}/food/menu`);
+  revalidatePath(`/op/${parsed.data.operationId}/food/shopping`);
 }
 
 const servingsSchema = z.object({
@@ -121,8 +121,8 @@ export async function setServings(formData: FormData): Promise<void> {
 
   const id = await slotId(parsed.data.operationId, parsed.data.day, parsed.data.slot);
   await getDb().update(schema.menuSlots).set({ servings: value }).where(eq(schema.menuSlots.id, id));
-  revalidatePath(`/op/${parsed.data.operationId}/menu`);
-  revalidatePath(`/op/${parsed.data.operationId}/shopping`);
+  revalidatePath(`/op/${parsed.data.operationId}/food/menu`);
+  revalidatePath(`/op/${parsed.data.operationId}/food/shopping`);
 }
 
 // --- Starter library --------------------------------------------------------
@@ -199,9 +199,9 @@ export async function loadStarterLibrary(formData: FormData): Promise<void> {
     }
   }
 
-  revalidatePath(`/op/${operationId.data}/recipes`);
-  revalidatePath(`/op/${operationId.data}/menu`);
-  revalidatePath(`/op/${operationId.data}/shopping`);
+  revalidatePath(`/op/${operationId.data}/food/recipes`);
+  revalidatePath(`/op/${operationId.data}/food/menu`);
+  revalidatePath(`/op/${operationId.data}/food/shopping`);
 }
 
 // --- Copy a day -------------------------------------------------------------
@@ -263,6 +263,6 @@ export async function copyDay(formData: FormData): Promise<void> {
     }
   }
 
-  revalidatePath(`/op/${parsed.data.operationId}/menu`);
-  revalidatePath(`/op/${parsed.data.operationId}/shopping`);
+  revalidatePath(`/op/${parsed.data.operationId}/food/menu`);
+  revalidatePath(`/op/${parsed.data.operationId}/food/shopping`);
 }

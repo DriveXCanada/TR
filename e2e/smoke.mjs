@@ -61,14 +61,14 @@ await step('operations list shows the seeded operation', async () => {
 });
 
 await step('board: supper excludes a volunteer who departed after lunch', async () => {
-  await go(`/op/${OP}?day=2026-03-05&slot=supper`);
+  await go(`/op/${OP}/food?day=2026-03-05&slot=supper`);
   await page.waitForSelector('text=/on site/i');
   if ((await body()).includes('Priya')) throw new Error('still shown at supper after departing at lunch');
   return 'correctly absent';
 });
 
 await step('board: lunch includes her, with a severe banner', async () => {
-  await go(`/op/${OP}?day=2026-03-05&slot=lunch`);
+  await go(`/op/${OP}/food?day=2026-03-05&slot=lunch`);
   await page.waitForSelector('text=/on site/i');
   const t = await body();
   if (!t.includes('Priya')) throw new Error('missing at lunch on her departure day');
@@ -90,9 +90,9 @@ await step('board shows headcount and a day budget', async () => {
 });
 
 for (const [name, path, expected] of [
-  ['roster', '/roster', /on the roster/i],
-  ['resources', '/resources', /demand vs actual/i],
-  ['travel', '/travel', /inbound/i],
+  ['roster', '/food/roster', /on the roster/i],
+  ['staffing', '/logistics/staffing', /demand vs actual/i],
+  ['travel', '/logistics/travel', /inbound/i],
 ]) {
   await step(`${name} page renders`, async () => {
     await go(`/op/${OP}${path}`);
@@ -103,7 +103,7 @@ for (const [name, path, expected] of [
 }
 
 await step('check: worcestershire on pulled pork -> HOLD, explained as anchovy', async () => {
-  await go(`/op/${OP}/check?day=2026-03-05&slot=lunch`);
+  await go(`/op/${OP}/food/check?day=2026-03-05&slot=lunch`);
   await page.waitForSelector('#dish');
   await page.fill('#dish', 'pulled pork, brown sugar, worcestershire sauce, buns');
   await page.click('[data-testid=run-check]');
@@ -114,7 +114,7 @@ await step('check: worcestershire on pulled pork -> HOLD, explained as anchovy',
 });
 
 await step('check: PB&J trips the peanut allergy', async () => {
-  await go(`/op/${OP}/check?day=2026-03-05&slot=lunch`);
+  await go(`/op/${OP}/food/check?day=2026-03-05&slot=lunch`);
   await page.waitForSelector('#dish');
   await page.fill('#dish', 'PB&J sandwich: bread, peanut butter, jam');
   await page.click('[data-testid=run-check]');
@@ -124,7 +124,7 @@ await step('check: PB&J trips the peanut allergy', async () => {
 });
 
 await step('check: a safe dish is CLEAR TO SERVE', async () => {
-  await go(`/op/${OP}/check?day=2026-03-05&slot=supper`);
+  await go(`/op/${OP}/food/check?day=2026-03-05&slot=supper`);
   await page.waitForSelector('#dish');
   await page.fill('#dish', 'rice, carrots, salt');
   await page.click('[data-testid=run-check]');
@@ -134,7 +134,7 @@ await step('check: a safe dish is CLEAR TO SERVE', async () => {
 
 
 await step('menu: lunch offers ONLY packed options', async () => {
-  await go(`/op/${OP}/menu?day=2026-03-02`);
+  await go(`/op/${OP}/food/menu?day=2026-03-02`);
   await page.waitForSelector('main');
   const lunchSection = page.locator('section', { has: page.locator('h2', { hasText: /^lunch$/i }) }).first();
   const options = await lunchSection.locator('select[name=recipeId] option').allInnerTexts();
@@ -151,7 +151,7 @@ await step('menu: add then remove a dish', async () => {
   // Count planned dishes by their Remove button — the empty state is also an <li>.
   const planned = () => supperSection().locator('li:has(button:has-text("Remove"))').count();
 
-  await go(`/op/${OP}/menu?day=2026-03-06`);
+  await go(`/op/${OP}/food/menu?day=2026-03-06`);
   await page.waitForSelector('main');
   const before = await planned();
 
@@ -169,7 +169,7 @@ await step('menu: add then remove a dish', async () => {
 });
 
 await step('menu: planned dishes carry their conflict chips', async () => {
-  await go(`/op/${OP}/menu?day=2026-03-02`);
+  await go(`/op/${OP}/food/menu?day=2026-03-02`);
   await page.waitForSelector('main');
   const t = await body();
   if (!/peanuts/i.test(t)) throw new Error('PB&J in the lunch slot did not surface a peanuts chip');
@@ -177,7 +177,7 @@ await step('menu: planned dishes carry their conflict chips', async () => {
 });
 
 await step('shopping: consolidates, prices and compares to budget', async () => {
-  await go(`/op/${OP}/shopping`);
+  await go(`/op/${OP}/food/shopping`);
   await page.waitForSelector('main');
   const t = await body();
   if (!/purchase cost/i.test(t)) throw new Error('no purchase cost');
@@ -200,7 +200,7 @@ await step('shopping: CSV export downloads', async () => {
 });
 
 await step('recipes: page lists the book and can add a recipe', async () => {
-  await go(`/op/${OP}/recipes`);
+  await go(`/op/${OP}/food/recipes`);
   await page.waitForSelector('main');
   const before = await page.locator('text=/\\/serving/').count();
   await page.fill('input[name=name]', 'E2E Test Loaf');
@@ -213,7 +213,7 @@ await step('recipes: page lists the book and can add a recipe', async () => {
 });
 
 await step('recipes: a new pack recipe becomes selectable at lunch', async () => {
-  await go(`/op/${OP}/menu?day=2026-03-02`);
+  await go(`/op/${OP}/food/menu?day=2026-03-02`);
   await page.waitForSelector('main');
   const lunch = page.locator('section', { has: page.locator('h2', { hasText: /^lunch$/i }) }).first();
   const options = await lunch.locator('select[name=recipeId] option').allInnerTexts();
@@ -282,7 +282,7 @@ if (KIOSK !== undefined) {
   });
 
   await step('join: she appears at LUNCH on her departure day, flagged severe', async () => {
-    await go(`/op/${OP}?day=2026-03-06&slot=lunch`);
+    await go(`/op/${OP}/food?day=2026-03-06&slot=lunch`);
     await page.waitForSelector('text=/on site/i');
     const t = await body();
     if (!t.includes('Wendeline')) throw new Error('kiosk sign-in did not reach the board');
@@ -292,21 +292,21 @@ if (KIOSK !== undefined) {
   });
 
   await step('join: she is GONE from supper the same day', async () => {
-    await go(`/op/${OP}?day=2026-03-06&slot=supper`);
+    await go(`/op/${OP}/food?day=2026-03-06&slot=supper`);
     await page.waitForSelector('text=/on site/i');
     if ((await body()).includes('Wendeline')) throw new Error('still counted at supper after a lunch departure');
     return 'correctly absent';
   });
 
   await step('join: she is absent before she arrives', async () => {
-    await go(`/op/${OP}?day=2026-03-03&slot=supper`);
+    await go(`/op/${OP}/food?day=2026-03-03&slot=supper`);
     await page.waitForSelector('text=/on site/i');
     if ((await body()).includes('Wendeline')) throw new Error('counted before arrival');
     return 'correctly absent';
   });
 
   await step('check: shellfish now trips a HOLD at her lunch', async () => {
-    await go(`/op/${OP}/check?day=2026-03-06&slot=lunch`);
+    await go(`/op/${OP}/food/check?day=2026-03-06&slot=lunch`);
     await page.waitForSelector('#dish');
     await page.fill('#dish', 'seafood chowder with shrimp and clams');
     await page.click('[data-testid=run-check]');

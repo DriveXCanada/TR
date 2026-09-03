@@ -26,7 +26,7 @@ export function CreateOperationForm(): React.ReactNode {
         <p role="alert" className="sm:col-span-2 text-sm text-severe">{state.error}</p>
       )}
       {state.ok !== undefined && (
-        <p role="status" className="sm:col-span-2 text-sm text-emerald-700">{state.ok}</p>
+        <p role="status" className="sm:col-span-2 text-sm text-ok">{state.ok}</p>
       )}
     </form>
   );

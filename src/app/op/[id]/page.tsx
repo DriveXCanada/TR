@@ -1,146 +1,106 @@
+import Link from 'next/link';
 import { requireSession } from '@/lib/auth/current';
 import { loadSnapshot } from '@/lib/data/access';
-import { resolveSelection } from '@/lib/view-params';
-import { crewForSlot, presenceWarnings, PRESENCE_WARNING_TEXT, peoplePresentOnDay } from '@/lib/presence';
-import { SEVERITY_RANK, SLOTS, type Severity } from '@/lib/domain';
+import { peoplePresentOnDay, daysBetween } from '@/lib/presence';
 import { dailyBudget } from '@/lib/budget';
-import { SlotSelector } from '@/components/SlotSelector';
-import { Card, SeverityChip, Stat, Empty, money } from '@/components/ui';
+import { money } from '@/components/ui';
 
 export const dynamic = 'force-dynamic';
 
-export default async function BoardPage(
-  { params, searchParams }: {
-    params: Promise<{ id: string }>;
-    searchParams: Promise<Record<string, string | string[] | undefined>>;
-  },
+/**
+ * Section chooser. Opening an operation asks one question — which job are you
+ * here to do — instead of presenting ten tabs that mix two different roles.
+ */
+export default async function OperationHome(
+  { params }: { params: Promise<{ id: string }> },
 ): Promise<React.ReactNode> {
   const session = await requireSession();
   const { id } = await params;
-  const snapshot = await loadSnapshot(id, session);
-  const { operation, volunteers } = snapshot;
-  const { days, day, slot } = resolveSelection(operation.startDate, operation.endDate, await searchParams);
+  const { operation, volunteers } = await loadSnapshot(id, session);
 
-  const crew = crewForSlot(volunteers, day, slot, operation.mealSchedule);
-  const onDay = peoplePresentOnDay(volunteers, day, operation.mealSchedule);
+  const today = new Date().toISOString().slice(0, 10);
+  const days = daysBetween(operation.startDate, operation.endDate);
+  const day = days.includes(today) ? today : (days[0] ?? operation.startDate);
 
-  // Every restriction held by someone actually in the line for this service.
-  const active = crew.flatMap((v) =>
-    v.restrictions.map((r) => ({ ...r, volunteer: v })),
-  ).sort((a, b) => SEVERITY_RANK[a.severity] - SEVERITY_RANK[b.severity]);
-
-  const severe = active.filter((r) => r.severity === 'severe');
-  const epipens = crew.filter((v) => v.epipenCarrying);
-  const ambiguous = crew
-    .map((v) => ({ v, warnings: presenceWarnings(v) }))
-    .filter((x) => x.warnings.length > 0);
-
-  const byKey = new Map<string, { key: string; severity: Severity; people: string[] }>();
-  for (const r of active) {
-    const entry = byKey.get(r.key) ?? { key: r.key, severity: r.severity, people: [] };
-    // Keep the worst severity seen for this restriction key.
-    if (SEVERITY_RANK[r.severity] < SEVERITY_RANK[entry.severity]) entry.severity = r.severity;
-    entry.people.push(`${r.volunteer.firstName} ${r.volunteer.lastName}`);
-    byKey.set(r.key, entry);
-  }
-  const tiles = [...byKey.values()].sort((a, b) =>
-    SEVERITY_RANK[a.severity] - SEVERITY_RANK[b.severity] || b.people.length - a.people.length);
+  const onSite = peoplePresentOnDay(volunteers, day, operation.mealSchedule);
+  const severe = volunteers.filter((v) =>
+    v.restrictions.some((r) => r.severity === 'severe')).length;
+  const budget = dailyBudget(volunteers, day, operation.perPersonPerDay, operation.mealSchedule);
 
   return (
-    <div className="space-y-6">
-      <SlotSelector days={days} slots={SLOTS} day={day} slot={slot} />
-
-      {/* The banner is the point of this page. Severe first, unmissable. */}
-      {severe.length > 0 ? (
-        <div role="alert" className="rounded-card border-2 border-severe-border bg-severe-bg p-4">
-          <h2 className="flex items-center gap-2 text-lg font-bold text-severe">
-            <span aria-hidden>▲</span>
-            {severe.length} SEVERE {severe.length === 1 ? 'ALLERGY' : 'ALLERGIES'} IN THE LINE
-          </h2>
-          <p className="mt-1 text-sm text-severe">
-            On site for {day} {slot}. Check every dish against these before service.
-          </p>
-          <ul className="mt-3 space-y-2">
-            {severe.map((r, i) => (
-              <li key={`${r.volunteer.id}-${r.key}-${i}`} className="rounded-md border border-severe-border bg-white p-3">
-                <div className="flex flex-wrap items-baseline gap-2">
-                  <span className="font-semibold text-tr-charcoal">
-                    {r.volunteer.firstName} {r.volunteer.lastName}
-                  </span>
-                  <span className="text-xs text-tr-grey">{r.volunteer.icsRole}</span>
-                  <SeverityChip severity="severe">{r.key.toUpperCase()}</SeverityChip>
-                </div>
-                {r.note !== null && <p className="mt-1 text-sm text-tr-ink">{r.note}</p>}
-              </li>
-            ))}
-          </ul>
-        </div>
-      ) : (
-        <div className="rounded-card border border-black/10 bg-white p-4 text-sm text-tr-grey">
-          No severe allergies among the {crew.length} on site for {day} {slot}. Soft restrictions still apply below.
-        </div>
-      )}
+    <main className="mx-auto max-w-6xl space-y-8 px-4 py-8">
+      <header>
+        <p className="eyebrow">{operation.status} · {operation.location}</p>
+        <h1 className="mt-1 text-3xl font-black uppercase text-tr-white">{operation.name}</h1>
+        <p className="mt-1 text-sm text-tr-grey">
+          {operation.startDate} → {operation.endDate} · showing {day}
+        </p>
+      </header>
 
       <div className="grid gap-3 sm:grid-cols-3">
-        <Stat label="On site — this service" value={crew.length} hint={`${day} · ${slot}`} />
-        <Stat label="On site — this day" value={onDay} hint="any meal" />
-        <Stat
-          label="Day budget"
-          value={money(dailyBudget(volunteers, day, operation.perPersonPerDay, operation.mealSchedule), operation.currency)}
-          hint={`${money(operation.perPersonPerDay, operation.currency)} x ${onDay} on site`}
+        <Metric label="On site" value={String(onSite)} />
+        <Metric label="Severe allergies" value={String(severe)} alarm={severe > 0} />
+        <Metric label="Day budget" value={money(budget, operation.currency)} />
+      </div>
+
+      <div className="grid gap-4 md:grid-cols-2">
+        <SectionCard
+          href={`/op/${id}/food`}
+          eyebrow="Food Unit"
+          title="Feed the crew"
+          blurb="Safety board, roster, menu planner, shopping list, pre-service checks and the daily brief."
+          items={['Severe-allergy board', 'Menu + packed lunches', 'Shopping list & budget', 'Clear-to-serve check']}
+        />
+        <SectionCard
+          href={`/op/${id}/logistics`}
+          eyebrow="Logistics"
+          title="Equip the crew"
+          blurb="PPE and consumables against who is actually on site, kit templates by operation type, movements and staffing."
+          items={['PPE demand by size', 'Consumables & resupply', 'Kit templates', 'Travel & staffing']}
         />
       </div>
 
-      {epipens.length > 0 && (
-        <Card title="Auto-injectors on site" subtitle="Where they are, for this service. Read it before you need it.">
-          <ul className="space-y-2">
-            {epipens.map((v) => (
-              <li key={v.id} className="rounded-md border border-severe-border bg-severe-bg p-3 text-sm">
-                <span className="font-semibold text-tr-charcoal">{v.firstName} {v.lastName}</span>
-                <span className="ml-2 text-xs text-tr-grey">{v.icsRole}</span>
-                <p className="mt-1 text-tr-ink">{v.epipenLocation ?? 'Location not recorded — ask at hand-off.'}</p>
-              </li>
-            ))}
-          </ul>
-        </Card>
-      )}
+      <Link href={`/op/${id}/settings`} className="inline-block text-sm text-tr-grey underline hover:text-tr-white">
+        Operation settings, team and kiosk QR
+      </Link>
+    </main>
+  );
+}
 
-      {ambiguous.length > 0 && (
-        <Card title="Counted as present, but unconfirmed" subtitle="These stays are ambiguous. We counted them IN rather than risk missing someone.">
-          <ul className="space-y-1 text-sm">
-            {ambiguous.map(({ v, warnings }) => (
-              <li key={v.id} className="flex flex-wrap items-center gap-2">
-                <span className="font-medium text-tr-charcoal">{v.firstName} {v.lastName}</span>
-                {warnings.map((w) => (
-                  <span key={w} className="chip chip-intolerance">{PRESENCE_WARNING_TEXT[w]}</span>
-                ))}
-              </li>
-            ))}
-          </ul>
-        </Card>
-      )}
-
-      <Card title="Restrictions in the line" subtitle={`Everyone on site for ${day} ${slot}, ranked by severity.`}>
-        {tiles.length === 0 ? (
-          <Empty>No dietary or medical restrictions recorded for this service.</Empty>
-        ) : (
-          <ul className="grid gap-2 sm:grid-cols-2">
-            {tiles.map((tile) => (
-              <li key={tile.key} className={`rounded-md border p-3 ${
-                tile.severity === 'severe' ? 'border-severe-border bg-severe-bg'
-                  : tile.severity === 'intolerance' ? 'border-intolerance-border bg-intolerance-bg'
-                    : 'border-preference-border bg-preference-bg'
-              }`}>
-                <div className="flex items-center justify-between gap-2">
-                  <span className="font-semibold capitalize text-tr-charcoal">{tile.key.replace('-', ' ')}</span>
-                  <SeverityChip severity={tile.severity} />
-                </div>
-                <p className="mt-1 text-xs text-tr-ink">{tile.people.length} on site: {tile.people.join(', ')}</p>
-              </li>
-            ))}
-          </ul>
-        )}
-      </Card>
+function Metric({ label, value, alarm = false }: { label: string; value: string; alarm?: boolean }): React.ReactNode {
+  return (
+    <div className={`card p-4 ${alarm ? 'border-severe-border' : ''}`}>
+      <div className="eyebrow">{label}</div>
+      <div className={`mt-1 text-3xl font-black ${alarm ? 'text-severe' : 'text-tr-white'}`}>{value}</div>
     </div>
+  );
+}
+
+function SectionCard(
+  { href, eyebrow, title, blurb, items }: {
+    href: string; eyebrow: string; title: string; blurb: string; items: readonly string[];
+  },
+): React.ReactNode {
+  return (
+    <Link
+      href={href}
+      className="card group relative overflow-hidden p-6 transition hover:border-tr-red focus:outline-none focus:ring-2 focus:ring-tr-red"
+    >
+      <span aria-hidden className="absolute inset-y-0 left-0 w-1 bg-tr-red transition group-hover:w-1.5" />
+      <p className="eyebrow text-tr-red-bright">{eyebrow}</p>
+      <h2 className="mt-1 text-2xl font-black uppercase text-tr-white">{title}</h2>
+      <p className="mt-2 text-sm text-tr-grey">{blurb}</p>
+      <ul className="mt-4 space-y-1 text-sm text-tr-silver">
+        {items.map((item) => (
+          <li key={item} className="flex items-center gap-2">
+            <span aria-hidden className="h-1 w-1 rounded-full bg-tr-red" />
+            {item}
+          </li>
+        ))}
+      </ul>
+      <span className="mt-5 inline-block text-xs font-bold uppercase tracking-wide text-tr-red-bright">
+        Open {eyebrow} →
+      </span>
+    </Link>
   );
 }

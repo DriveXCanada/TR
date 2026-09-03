@@ -25,8 +25,26 @@ await step('sign in', async()=>{
   return 'ok';
 });
 
+// This suite mutates the operation it plans against, so it provisions a fresh
+// one each run rather than depending on fixture state left by a previous run.
+let OPID = OP;
+await step('provision a fresh operation to plan against', async()=>{
+  const name = `OP PLANNER ${Date.now().toString(36).toUpperCase()}`;
+  await go('/'); await page.waitForSelector('input[name=name]');
+  await page.fill('input[name=name]', name);
+  await page.fill('input[name=location]','Planner Fixture, MB');
+  await page.fill('input[name=startDate]','2026-04-01');
+  await page.fill('input[name=endDate]','2026-04-05');
+  await page.click('button:has-text("Create operation")');
+  await page.waitForSelector(`text=/${name}/`,{timeout:20000});
+  await page.click(`text=/${name}/`);
+  await page.waitForURL(/\/op\/[0-9a-f-]+$/,{timeout:20000});
+  OPID = page.url().split('/op/')[1];
+  return name;
+});
+
 await step('an empty operation explains itself instead of showing dead pickers', async()=>{
-  await go(`/op/${OP}/menu`); await page.waitForSelector('main');
+  await go(`/op/${OPID}/food/menu`); await page.waitForSelector('main');
   const t=await main();
   if(!/nothing to plan with yet/i.test(t)) throw new Error('no empty-state explanation');
   if(!/load the standard field-kitchen library/i.test(t)) throw new Error('no one-click way out');
@@ -40,7 +58,7 @@ await step('one click loads the whole catalogue', async()=>{
 });
 
 await step('recipes and ingredients actually landed', async()=>{
-  await go(`/op/${OP}/recipes`); await page.waitForSelector('main');
+  await go(`/op/${OPID}/food/recipes`); await page.waitForSelector('main');
   const t=await main();
   const m=t.match(/(\d+) recipes · (\d+) ingredients/);
   if(m===null) throw new Error('no counts shown');
@@ -52,14 +70,14 @@ await step('loading twice is safe and does not duplicate', async()=>{
   const before=(await main()).match(/(\d+) recipes · (\d+) ingredients/)[0];
   await page.click('[data-testid=load-starter]');
   await page.waitForTimeout(3000);
-  await go(`/op/${OP}/recipes`); await page.waitForSelector('main');
+  await go(`/op/${OPID}/food/recipes`); await page.waitForSelector('main');
   const after=(await main()).match(/(\d+) recipes · (\d+) ingredients/)[0];
   if(before!==after) throw new Error(`counts changed: ${before} -> ${after}`);
   return `idempotent (${after})`;
 });
 
 await step('week overview shows every day and flags unplanned slots', async()=>{
-  await go(`/op/${OP}/menu?day=2026-04-01`); await page.waitForSelector('text=/the whole operation/i');
+  await go(`/op/${OPID}/food/menu?day=2026-04-01`); await page.waitForSelector('text=/the whole operation/i');
   const t=await main();
   if(!t.includes('2026-04-01')||!t.includes('2026-04-05')) throw new Error('not all days listed');
   if(!/— nothing —/.test(t)) throw new Error('unplanned slots not flagged');
@@ -82,14 +100,14 @@ await step('roll that day forward across the operation', async()=>{
   await page.click('button:has-text("Select all")');
   await page.click('[data-testid=copy-day]');
   await page.waitForTimeout(4000);
-  await go(`/op/${OP}/menu?day=2026-04-04`); await page.waitForSelector('main');
+  await go(`/op/${OPID}/food/menu?day=2026-04-04`); await page.waitForSelector('main');
   const planned=await page.locator('li:has(button:has-text("Remove"))').count();
   if(planned<2) throw new Error(`4 April did not receive the copy (${planned} dishes)`);
   return `4 April now has ${planned} dishes`;
 });
 
 await step('the shopping list picks it all up', async()=>{
-  await go(`/op/${OP}/shopping`); await page.waitForSelector('main');
+  await go(`/op/${OPID}/food/shopping`); await page.waitForSelector('main');
   const rows=await page.locator('table tbody tr').count();
   if(rows<3) throw new Error(`expected consolidated lines, got ${rows}`);
   return `${rows} priced lines from a 5-day plan`;

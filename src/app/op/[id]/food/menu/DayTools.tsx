@@ -44,7 +44,7 @@ export function CopyDayForm(
             className={`rounded-md border px-2 py-1 text-xs ${
               selected.includes(day)
                 ? 'border-tr-red bg-tr-red text-white'
-                : 'border-black/15 bg-white text-tr-ink hover:bg-tr-mist'
+                : 'border-tr-line bg-tr-slate text-tr-silver hover:bg-tr-charcoal'
             }`}
           >{day.slice(5)}</button>
         ))}

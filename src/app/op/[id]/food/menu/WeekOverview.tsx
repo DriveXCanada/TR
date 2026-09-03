@@ -17,7 +17,7 @@ export function WeekOverview(
     <div className="overflow-x-auto">
       <table className="w-full min-w-[760px] text-sm">
         <thead>
-          <tr className="border-b border-black/10 text-left text-xs uppercase tracking-wide text-tr-grey">
+          <tr className="border-b border-tr-line text-left text-xs uppercase tracking-wide text-tr-grey">
             <th className="py-2 pr-3">Day</th>
             {SLOTS.map((slot) => <th key={slot} className="px-2 py-2 capitalize">{slot}</th>)}
             <th className="px-2 py-2 text-right">Cost / budget</th>
@@ -25,13 +25,13 @@ export function WeekOverview(
         </thead>
         <tbody>
           {days.map((day) => (
-            <tr key={day.day} className={`border-b border-black/5 align-top ${
+            <tr key={day.day} className={`border-b border-tr-line align-top ${
               day.day === selectedDay ? 'bg-tr-red/5' : ''
             }`}>
               <td className="py-2 pr-3 whitespace-nowrap">
-                <Link href={`/op/${opId}/menu?day=${day.day}`}
+                <Link href={`/op/${opId}/food/menu?day=${day.day}`}
                   className={`underline-offset-2 hover:underline ${
-                    day.day === selectedDay ? 'font-semibold text-tr-red' : 'text-tr-charcoal'}`}>
+                    day.day === selectedDay ? 'font-semibold text-tr-red-bright' : 'text-tr-white'}`}>
                   {day.day}
                 </Link>
               </td>
@@ -43,14 +43,14 @@ export function WeekOverview(
                     {dishes.length === 0 ? (
                       <span className="text-xs text-severe">— nothing —</span>
                     ) : (
-                      <ul className="space-y-0.5 text-xs text-tr-ink">
+                      <ul className="space-y-0.5 text-xs text-tr-silver">
                         {dishes.map((d) => <li key={d.id}>{d.name}</li>)}
                       </ul>
                     )}
                   </td>
                 );
               })}
-              <td className={`px-2 py-2 text-right whitespace-nowrap ${day.overBudget ? 'text-severe' : 'text-tr-ink'}`}>
+              <td className={`px-2 py-2 text-right whitespace-nowrap ${day.overBudget ? 'text-severe' : 'text-tr-silver'}`}>
                 {money(day.cost, currency)}
                 <span className="text-tr-grey"> / {money(day.budget, currency)}</span>
               </td>

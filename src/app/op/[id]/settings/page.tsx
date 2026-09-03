@@ -59,7 +59,7 @@ export default async function SettingsPage(
           </p>
         )}
         {/* A data: URL QR — next/image would add work and no benefit. */}
-        <img src={qr} alt={`QR code linking to ${joinUrl}`} width={320} height={320} className="rounded-md border border-black/10" />
+        <img src={qr} alt={`QR code linking to ${joinUrl}`} width={320} height={320} className="rounded-md border border-tr-line" />
         <p className="mt-2 break-all font-mono text-xs text-tr-grey">{joinUrl}</p>
         <form action={rotateKioskToken} className="no-print mt-3">
           <input type="hidden" name="operationId" value={id} />
@@ -94,7 +94,7 @@ export default async function SettingsPage(
       </Card>
 
       <Card title="Meal schedule">
-        <p className="text-sm text-tr-ink">
+        <p className="text-sm text-tr-silver">
           {operation.mealSchedule.join(' → ')}. Lunch is a packed field lunch: the planner offers only
           cold pack options for it.
         </p>

@@ -31,7 +31,7 @@ export function CreateManagerForm(): React.ReactNode {
         <p role="alert" className="sm:col-span-4 text-sm text-severe">{state.error}</p>
       )}
       {state.ok !== undefined && (
-        <p role="status" className="sm:col-span-4 text-sm text-emerald-700">{state.ok}</p>
+        <p role="status" className="sm:col-span-4 text-sm text-ok">{state.ok}</p>
       )}
     </form>
   );
@@ -48,7 +48,7 @@ export function ResetPinForm({ userId }: { userId: string }): React.ReactNode {
       </label>
       <button type="submit" className="btn-secondary px-2 py-1 text-xs" disabled={pending}>Reset PIN</button>
       {state.error !== undefined && <span className="text-xs text-severe">{state.error}</span>}
-      {state.ok !== undefined && <span className="text-xs text-emerald-700">{state.ok}</span>}
+      {state.ok !== undefined && <span className="text-xs text-ok">{state.ok}</span>}
     </form>
   );
 }

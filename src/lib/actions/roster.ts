@@ -79,8 +79,8 @@ export async function addVolunteer(_prev: RosterState, formData: FormData): Prom
     });
   }
 
-  revalidatePath(`/op/${parsed.data.operationId}/roster`);
-  revalidatePath(`/op/${parsed.data.operationId}`);
+  revalidatePath(`/op/${parsed.data.operationId}/food/roster`);
+  revalidatePath(`/op/${parsed.data.operationId}/food`);
   return {
     ok: `Added ${parsed.data.firstName} ${parsed.data.lastName}.`
       + (key === null ? ' Add any further restrictions from their row.' : ''),
@@ -114,8 +114,8 @@ export async function addRestriction(formData: FormData): Promise<void> {
     severity: parsed.data.severity,
     note: blankToNull(parsed.data.note),
   });
-  revalidatePath(`/op/${parsed.data.operationId}/roster`);
-  revalidatePath(`/op/${parsed.data.operationId}`);
+  revalidatePath(`/op/${parsed.data.operationId}/food/roster`);
+  revalidatePath(`/op/${parsed.data.operationId}/food`);
 }
 
 const staySchema = z.object({
@@ -143,6 +143,6 @@ export async function updateStay(formData: FormData): Promise<void> {
     eq(schema.volunteers.operationId, parsed.data.operationId),
   ));
 
-  revalidatePath(`/op/${parsed.data.operationId}/roster`);
-  revalidatePath(`/op/${parsed.data.operationId}`);
+  revalidatePath(`/op/${parsed.data.operationId}/food/roster`);
+  revalidatePath(`/op/${parsed.data.operationId}/food`);
 }

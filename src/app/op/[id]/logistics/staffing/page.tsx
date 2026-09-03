@@ -23,15 +23,15 @@ export default async function ResourcesPage(
       <div className="overflow-x-auto">
         <table className="w-full min-w-[640px] text-sm">
           <thead>
-            <tr className="border-b border-black/10 text-left text-xs uppercase tracking-wide text-tr-grey">
+            <tr className="border-b border-tr-line text-left text-xs uppercase tracking-wide text-tr-grey">
               <th className="py-2 pr-3">Role</th>
               {days.map((d) => <th key={d} className="px-2 py-2 text-center font-medium">{d.slice(5)}</th>)}
             </tr>
           </thead>
           <tbody>
             {roles.map((role) => (
-              <tr key={role} className="border-b border-black/5">
-                <td className="py-2 pr-3 font-medium text-tr-charcoal">{role}</td>
+              <tr key={role} className="border-b border-tr-line">
+                <td className="py-2 pr-3 font-medium text-tr-white">{role}</td>
                 {days.map((d) => {
                   const actual = volunteers.filter((v) =>
                     v.icsRole === role && isPresentOnDay(v, d, operation.mealSchedule)).length;
@@ -39,7 +39,7 @@ export default async function ResourcesPage(
                   const short = want > 0 && actual < want;
                   return (
                     <td key={d} className="px-2 py-2 text-center">
-                      <span className={short ? 'font-semibold text-severe' : 'text-tr-ink'}>{actual}</span>
+                      <span className={short ? 'font-semibold text-severe' : 'text-tr-silver'}>{actual}</span>
                       <span className="text-tr-grey">/{want}</span>
                     </td>
                   );

@@ -39,7 +39,7 @@ export default async function RosterPage(
 
       {byRole.length === 0 ? <Empty>No volunteers yet. Share the kiosk QR from Settings.</Empty> : byRole.map((group) => (
         <Card key={group.role} title={group.role} subtitle={`${group.people.length} assigned`}>
-          <ul className="divide-y divide-black/5">
+          <ul className="divide-y divide-tr-line">
             {group.people.map((v) => {
               const present = isPresentForSlot(v, day, slot, operation.mealSchedule);
               const warnings = presenceWarnings(v);
@@ -47,9 +47,9 @@ export default async function RosterPage(
               return (
                 <li key={v.id} className={`py-3 ${present ? '' : 'opacity-45'}`}>
                   <div className="flex flex-wrap items-center gap-2">
-                    <span className="font-medium text-tr-charcoal">{v.firstName} {v.lastName}</span>
+                    <span className="font-medium text-tr-white">{v.firstName} {v.lastName}</span>
                     {present
-                      ? <span className="chip border-tr-red/30 bg-tr-red/10 text-tr-red">On site</span>
+                      ? <span className="chip border-tr-red/50 bg-tr-red/15 text-tr-red-bright">On site</span>
                       : <span className="chip chip-preference">Not this service</span>}
                     {v.epipenCarrying && <span className="chip chip-severe">Auto-injector</span>}
                     {sorted.map((r, i) => (
@@ -66,7 +66,7 @@ export default async function RosterPage(
 
                   <details className="no-print mt-2">
                     <summary className="cursor-pointer text-xs text-tr-grey underline">Edit</summary>
-                    <div className="mt-2 space-y-3 rounded-md border border-black/10 p-3">
+                    <div className="mt-2 space-y-3 rounded-md border border-tr-line p-3">
                       <form action={updateStay} className="flex flex-wrap items-end gap-2">
                         <input type="hidden" name="operationId" value={id} />
                         <input type="hidden" name="volunteerId" value={v.id} />

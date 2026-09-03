@@ -51,7 +51,7 @@ export async function updateSettings(formData: FormData): Promise<void> {
   }).where(eq(schema.operations.id, parsed.data.operationId));
 
   revalidatePath(`/op/${parsed.data.operationId}/settings`);
-  revalidatePath(`/op/${parsed.data.operationId}`);
+  revalidatePath(`/op/${parsed.data.operationId}/food`);
 }
 
 const purgeSchema = z.object({
@@ -82,6 +82,6 @@ export async function purgeNow(_prev: PurgeState, formData: FormData): Promise<P
   // Restrictions cascade from volunteers, so one delete clears both.
   await db.delete(schema.volunteers).where(eq(schema.volunteers.operationId, parsed.data.operationId));
 
-  revalidatePath(`/op/${parsed.data.operationId}`);
+  revalidatePath(`/op/${parsed.data.operationId}/food`);
   return { deleted: rows.length };
 }

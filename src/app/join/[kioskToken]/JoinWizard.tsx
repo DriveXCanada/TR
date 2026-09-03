@@ -57,8 +57,8 @@ export function JoinWizard(
   if (state.ok === true) {
     return (
       <div className="card p-6 text-center">
-        <h1 className="text-xl font-bold text-tr-charcoal">You&apos;re on the roster</h1>
-        <p className="mt-2 text-sm text-tr-ink">
+        <h1 className="text-xl font-bold text-tr-white">You&apos;re on the roster</h1>
+        <p className="mt-2 text-sm text-tr-silver">
           Thanks. The kitchen has your details for <strong>{operationName}</strong>.
         </p>
         <p className="mt-4 text-sm text-tr-grey">
@@ -79,20 +79,20 @@ export function JoinWizard(
       <ol className="flex flex-wrap gap-1 text-xs" aria-label="Progress">
         {STEPS.map((label, i) => (
           <li key={label} className={`rounded px-2 py-1 ${
-            i === step ? 'bg-tr-red text-white' : i < step ? 'bg-tr-red/10 text-tr-red' : 'bg-black/5 text-tr-grey'
+            i === step ? 'bg-tr-red text-white' : i < step ? 'bg-tr-red/15 text-tr-red-bright' : 'bg-tr-raised text-tr-grey'
           }`}>{label}</li>
         ))}
       </ol>
 
       {/* Every step stays mounted so the browser submits all fields at once. */}
       <section hidden={step !== 0} className="space-y-3">
-        <h2 className="text-lg font-semibold text-tr-charcoal">Before we start</h2>
-        <p className="text-sm text-tr-ink">
+        <h2 className="text-lg font-semibold text-tr-white">Before we start</h2>
+        <p className="text-sm text-tr-silver">
           The kitchen needs your dietary and medical information to feed you safely. It is visible only to
           the leads running <strong>{operationName}</strong>, is never sold or shared, and is permanently
           deleted after the operation&apos;s retention period.
         </p>
-        <p className="text-sm text-tr-ink">
+        <p className="text-sm text-tr-silver">
           You can decline and sign in with a lead in person instead.
         </p>
         <label className="flex items-start gap-2 text-sm">
@@ -105,7 +105,7 @@ export function JoinWizard(
       </section>
 
       <section hidden={step !== 1} className="space-y-3">
-        <h2 className="text-lg font-semibold text-tr-charcoal">Who are you?</h2>
+        <h2 className="text-lg font-semibold text-tr-white">Who are you?</h2>
         <div className="grid gap-3 sm:grid-cols-2">
           <label className="text-sm"><span className="label">First name</span>
             <input name="firstName" className="input" autoComplete="given-name" /></label>
@@ -121,8 +121,8 @@ export function JoinWizard(
       </section>
 
       <section hidden={step !== 2} className="space-y-3">
-        <h2 className="text-lg font-semibold text-tr-charcoal">Allergies, intolerances, diet</h2>
-        <p className="text-sm text-tr-ink">
+        <h2 className="text-lg font-semibold text-tr-white">Allergies, intolerances, diet</h2>
+        <p className="text-sm text-tr-silver">
           Tap everything that applies. If something could send you to hospital, mark it <strong>Severe</strong> —
           the kitchen treats severe as a hard stop on a dish.
         </p>
@@ -132,7 +132,7 @@ export function JoinWizard(
               key={item.key} type="button" onClick={() => toggle(item.key)}
               className={`rounded-full border px-3 py-1.5 text-sm ${
                 picked.some((p) => p.key === item.key)
-                  ? 'border-tr-red bg-tr-red text-white' : 'border-black/15 bg-white text-tr-ink'
+                  ? 'border-tr-red bg-tr-red text-white' : 'border-tr-line bg-tr-slate text-tr-silver'
               }`}
             >{item.label}</button>
           ))}
@@ -150,9 +150,9 @@ export function JoinWizard(
         {picked.length > 0 && (
           <ul className="space-y-2">
             {picked.map((p) => (
-              <li key={p.key} className="rounded-md border border-black/10 p-2">
+              <li key={p.key} className="rounded-md border border-tr-line p-2">
                 <div className="flex flex-wrap items-center gap-2">
-                  <span className="font-medium capitalize text-tr-charcoal">{p.key.replace('-', ' ')}</span>
+                  <span className="font-medium capitalize text-tr-white">{p.key.replace('-', ' ')}</span>
                   <select
                     className="input w-auto py-1 text-sm" value={p.severity}
                     onChange={(e) => update(p.key, { severity: e.target.value as Severity })}
@@ -178,8 +178,8 @@ export function JoinWizard(
       </section>
 
       <section hidden={step !== 3} className="space-y-3">
-        <h2 className="text-lg font-semibold text-tr-charcoal">Auto-injector</h2>
-        <p className="text-sm text-tr-ink">
+        <h2 className="text-lg font-semibold text-tr-white">Auto-injector</h2>
+        <p className="text-sm text-tr-silver">
           If you carry an EpiPen or similar, tell us exactly where it is. In an emergency somebody who
           does not know you has to find it in seconds.
         </p>
@@ -197,8 +197,8 @@ export function JoinWizard(
       </section>
 
       <section hidden={step !== 4} className="space-y-3">
-        <h2 className="text-lg font-semibold text-tr-charcoal">Which meals are you on site for?</h2>
-        <p className="text-sm text-tr-ink">
+        <h2 className="text-lg font-semibold text-tr-white">Which meals are you on site for?</h2>
+        <p className="text-sm text-tr-silver">
           The kitchen cooks to a headcount per meal, so arriving at supper or leaving after lunch
           genuinely changes what gets made.
         </p>
@@ -234,8 +234,8 @@ export function JoinWizard(
       </section>
 
       <section hidden={step !== 5} className="space-y-3">
-        <h2 className="text-lg font-semibold text-tr-charcoal">Preferences (optional)</h2>
-        <p className="text-sm text-tr-ink">
+        <h2 className="text-lg font-semibold text-tr-white">Preferences (optional)</h2>
+        <p className="text-sm text-tr-silver">
           Not safety information — this just helps the kitchen cook things people actually want after a hard day.
         </p>
         <label className="text-sm block"><span className="label">Things you like</span>
@@ -249,8 +249,8 @@ export function JoinWizard(
       </section>
 
       <section hidden={!visible} className="space-y-3">
-        <h2 className="text-lg font-semibold text-tr-charcoal">Check and send</h2>
-        <p className="text-sm text-tr-ink">
+        <h2 className="text-lg font-semibold text-tr-white">Check and send</h2>
+        <p className="text-sm text-tr-silver">
           You marked <strong>{picked.filter((p) => p.severity === 'severe').length}</strong> item(s) as severe
           and <strong>{picked.length}</strong> in total.
           {carrying ? ' You told us you carry an auto-injector.' : ''}

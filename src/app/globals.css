@@ -2,26 +2,59 @@
 @tailwind components;
 @tailwind utilities;
 
-:root { color-scheme: light; }
+:root { color-scheme: dark; }
 
 body {
-  @apply bg-tr-mist text-tr-ink antialiased;
+  @apply bg-tr-charcoal text-tr-silver antialiased;
 }
 
-/* Severity is meaning, not decoration — these survive any rebrand. */
-.chip { @apply inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-xs font-medium; }
-.chip-severe { @apply border-severe-border bg-severe-bg text-severe; }
-.chip-intolerance { @apply border-intolerance-border bg-intolerance-bg text-intolerance; }
-.chip-preference { @apply border-preference-border bg-preference-bg text-preference; }
+h1, h2, h3 { @apply tracking-headline; }
 
-.card { @apply rounded-card border border-black/10 bg-white shadow-sm; }
-.btn { @apply inline-flex items-center justify-center rounded-md px-3 py-2 text-sm font-semibold transition disabled:opacity-50; }
-.btn-primary { @apply btn bg-tr-red text-white hover:bg-tr-red-dark; }
-.btn-secondary { @apply btn border border-black/15 bg-white text-tr-ink hover:bg-tr-mist; }
-.input { @apply w-full rounded-md border border-black/15 px-3 py-2 text-sm outline-none focus:border-tr-red focus:ring-1 focus:ring-tr-red; }
-.label { @apply mb-1 block text-sm font-medium text-tr-ink; }
+@layer components {
+  /* --- Surfaces --- */
+  .card { @apply rounded-card border border-tr-line bg-tr-slate; }
+  .card-head { @apply border-b border-tr-line px-4 py-3; }
 
+  /* --- Type --- */
+  .title { @apply text-tr-white font-bold; }
+  .muted { @apply text-tr-grey; }
+  .label { @apply mb-1 block text-xs font-semibold uppercase tracking-wide text-tr-grey; }
+  .eyebrow { @apply text-xs font-bold uppercase tracking-[0.12em] text-tr-grey; }
+
+  /* --- Controls --- */
+  .btn {
+    @apply inline-flex items-center justify-center rounded px-3 py-2 text-sm font-bold uppercase
+           tracking-wide transition disabled:cursor-not-allowed disabled:opacity-40;
+  }
+  .btn-primary { @apply btn bg-tr-red text-white hover:bg-tr-red-bright; }
+  .btn-secondary { @apply btn border border-tr-line bg-tr-raised text-tr-silver hover:border-tr-grey hover:text-tr-white; }
+  .btn-danger { @apply btn bg-severe-solid text-white hover:brightness-110; }
+
+  .input {
+    @apply w-full rounded border border-tr-line bg-tr-charcoal px-3 py-2 text-sm text-tr-white
+           outline-none placeholder:text-tr-grey/60 focus:border-tr-red focus:ring-1 focus:ring-tr-red;
+  }
+  select.input option { @apply bg-tr-charcoal text-tr-white; }
+
+  /* --- Severity. Meaning, not decoration. --- */
+  .chip { @apply inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-xs font-bold uppercase tracking-wide; }
+  .chip-severe { @apply border-severe-border bg-severe-bg text-severe; }
+  .chip-intolerance { @apply border-intolerance-border bg-intolerance-bg text-intolerance; }
+  .chip-preference { @apply border-preference-border bg-preference-bg text-preference; }
+  .chip-brand { @apply border-tr-red/50 bg-tr-red/15 text-tr-red-bright; }
+  .chip-ok { @apply border-ok-border bg-ok-bg text-ok; }
+
+  /* The loudest thing the app can say. Reserved for severe allergy warnings. */
+  .alarm { @apply rounded-card border-2 border-severe-border bg-severe-bg p-4; }
+  .alarm-title { @apply flex items-center gap-2 text-lg font-black uppercase tracking-wide text-severe; }
+}
+
+/* Printed output is always light — ink on white, and no chrome. */
 @media print {
   .no-print { display: none !important; }
-  body { @apply bg-white; }
+  :root { color-scheme: light; }
+  body { background: #fff !important; color: #111 !important; }
+  .card, .alarm { background: #fff !important; border-color: #999 !important; }
+  .title, h1, h2, h3, strong { color: #000 !important; }
+  .muted, .label, .eyebrow { color: #444 !important; }
 }

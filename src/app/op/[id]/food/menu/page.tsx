@@ -40,7 +40,7 @@ export default async function MenuPage(
     return (
       <div className="space-y-6">
         <Card title="Nothing to plan with yet" subtitle="This operation has no recipes or ingredients.">
-          <p className="mb-4 text-sm text-tr-ink">
+          <p className="mb-4 text-sm text-tr-silver">
             The planner needs a recipe book before it can do anything. Load the standard field-kitchen
             library to start planning immediately, or build your own from the <strong>Recipes</strong> tab.
           </p>
@@ -119,9 +119,9 @@ export default async function MenuPage(
                   [recipe.name, ...recipe.ingredients.map((i) => i.name)], crew,
                 ).conflicts].sort((a, b) => SEVERITY_RANK[a.severity] - SEVERITY_RANK[b.severity]);
                 return (
-                  <li key={dish.id} className="flex flex-wrap items-center justify-between gap-2 rounded-md border border-black/10 p-2">
+                  <li key={dish.id} className="flex flex-wrap items-center justify-between gap-2 rounded-md border border-tr-line p-2">
                     <div>
-                      <span className="font-medium text-tr-charcoal">{dish.name}</span>
+                      <span className="font-medium text-tr-white">{dish.name}</span>
                       <span className="ml-2 text-xs text-tr-grey">{money(dish.cost, operation.currency)}</span>
                       <div className="mt-1 flex flex-wrap gap-1">
                         {[...new Map(dishConflicts.map((c) => [`${c.severity}-${c.tag}`, c])).values()].map((c) => (

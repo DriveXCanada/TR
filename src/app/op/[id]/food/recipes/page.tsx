@@ -68,10 +68,10 @@ export default async function RecipesPage(
         {recipes.length === 0 ? <Empty>No recipes yet.</Empty> : (
           <ul className="space-y-3">
             {recipes.map((recipe) => (
-              <li key={recipe.id} className="rounded-md border border-black/10 p-3">
+              <li key={recipe.id} className="rounded-md border border-tr-line p-3">
                 <div className="flex flex-wrap items-center justify-between gap-2">
                   <div>
-                    <span className="font-semibold text-tr-charcoal">{recipe.name}</span>
+                    <span className="font-semibold text-tr-white">{recipe.name}</span>
                     <span className="ml-2 text-xs uppercase tracking-wide text-tr-grey">{recipe.category}</span>
                     <span className="ml-2 text-xs text-tr-grey">
                       {money(recipeCostPerServing(recipe, ingredients), operation.currency)}/serving
@@ -87,13 +87,13 @@ export default async function RecipesPage(
 
                 <div className="mt-1 flex flex-wrap gap-1">
                   {recipe.tags.map((tag) => (
-                    <span key={tag} className={`chip ${tag === PACK_TAG ? 'border-tr-red/30 bg-tr-red/10 text-tr-red' : 'chip-preference'}`}>
+                    <span key={tag} className={`chip ${tag === PACK_TAG ? 'border-tr-red/50 bg-tr-red/15 text-tr-red-bright' : 'chip-preference'}`}>
                       {tag}
                     </span>
                   ))}
                 </div>
 
-                <ul className="mt-2 text-sm text-tr-ink">
+                <ul className="mt-2 text-sm text-tr-silver">
                   {recipe.ingredients.map((line) => (
                     <li key={`${recipe.id}-${line.ingredientId}`}>
                       {line.qtyPerServing} {line.unit} — {line.name}

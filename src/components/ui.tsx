@@ -28,8 +28,8 @@ export function Card({ title, subtitle, children, className = '' }: {
     <section className={`card p-4 ${className}`}>
       {title !== undefined && (
         <header className="mb-3">
-          <h2 className="text-sm font-semibold uppercase tracking-wide text-tr-grey">{title}</h2>
-          {subtitle !== undefined && <p className="mt-0.5 text-xs text-tr-grey">{subtitle}</p>}
+          <h2 className="eyebrow text-tr-silver">{title}</h2>
+          {subtitle !== undefined && <p className="mt-1 text-xs text-tr-grey">{subtitle}</p>}
         </header>
       )}
       {children}
@@ -40,8 +40,8 @@ export function Card({ title, subtitle, children, className = '' }: {
 export function Stat({ label, value, hint }: { label: string; value: string | number; hint?: string }): React.ReactNode {
   return (
     <div className="card p-4">
-      <div className="text-xs uppercase tracking-wide text-tr-grey">{label}</div>
-      <div className="mt-1 text-2xl font-semibold text-tr-charcoal">{value}</div>
+      <div className="eyebrow">{label}</div>
+      <div className="mt-1 text-2xl font-black text-tr-white">{value}</div>
       {hint !== undefined && <div className="mt-0.5 text-xs text-tr-grey">{hint}</div>}
     </div>
   );

@@ -40,7 +40,7 @@ export default async function ManagersPage(): Promise<React.ReactNode> {
       <AppHeader userName={session.name} />
       <main className="mx-auto max-w-4xl space-y-6 px-4 py-6">
         <div className="flex items-center justify-between gap-3">
-          <h1 className="text-2xl font-semibold text-tr-charcoal">Accounts</h1>
+          <h1 className="text-2xl font-semibold text-tr-white">Accounts</h1>
           <Link href="/" className="text-sm text-tr-grey underline">Back to operations</Link>
         </div>
 
@@ -54,13 +54,13 @@ export default async function ManagersPage(): Promise<React.ReactNode> {
 
         <Card title={`Accounts (${rows.length})`}>
           {rows.length === 0 ? <Empty>No accounts yet.</Empty> : (
-            <ul className="divide-y divide-black/5">
+            <ul className="divide-y divide-tr-line">
               {rows.map((row) => (
                 <li key={row.id} className="py-3">
                   <div className="flex flex-wrap items-center gap-2">
-                    <span className="font-medium text-tr-charcoal">{row.name}</span>
+                    <span className="font-medium text-tr-white">{row.name}</span>
                     <span className="font-mono text-xs text-tr-grey">{row.username}</span>
-                    {row.isMaster && <span className="chip border-tr-red/30 bg-tr-red/10 text-tr-red">Master</span>}
+                    {row.isMaster && <span className="chip border-tr-red/50 bg-tr-red/15 text-tr-red-bright">Master</span>}
                     {!row.isActive && <span className="chip chip-severe">Deactivated</span>}
                   </div>
                   <p className="mt-1 text-xs text-tr-grey">

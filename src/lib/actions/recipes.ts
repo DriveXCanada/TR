@@ -44,7 +44,7 @@ export async function createIngredient(formData: FormData): Promise<void> {
     packUnit: parsed.data.packUnit === '' ? null : parsed.data.packUnit,
     packCost: parsed.data.packCost === '' ? null : parsed.data.packCost,
   });
-  revalidatePath(`/op/${parsed.data.operationId}/recipes`);
+  revalidatePath(`/op/${parsed.data.operationId}/food/recipes`);
 }
 
 const onHandSchema = z.object({
@@ -64,8 +64,8 @@ export async function setHaveOnHand(formData: FormData): Promise<void> {
       eq(schema.ingredients.id, parsed.data.ingredientId),
       eq(schema.ingredients.operationId, parsed.data.operationId),
     ));
-  revalidatePath(`/op/${parsed.data.operationId}/shopping`);
-  revalidatePath(`/op/${parsed.data.operationId}/recipes`);
+  revalidatePath(`/op/${parsed.data.operationId}/food/shopping`);
+  revalidatePath(`/op/${parsed.data.operationId}/food/recipes`);
 }
 
 const recipeSchema = z.object({
@@ -93,8 +93,8 @@ export async function createRecipe(formData: FormData): Promise<void> {
     method: parsed.data.method === '' ? null : parsed.data.method,
     burners: Number.isFinite(burners) ? Math.max(0, Math.trunc(burners)) : 0,
   });
-  revalidatePath(`/op/${parsed.data.operationId}/recipes`);
-  revalidatePath(`/op/${parsed.data.operationId}/menu`);
+  revalidatePath(`/op/${parsed.data.operationId}/food/recipes`);
+  revalidatePath(`/op/${parsed.data.operationId}/food/menu`);
 }
 
 const recipeLineSchema = z.object({
@@ -130,8 +130,8 @@ export async function addRecipeIngredient(formData: FormData): Promise<void> {
     qtyPerServing: parsed.data.qtyPerServing === '' ? '0' : parsed.data.qtyPerServing,
     unit: parsed.data.unit,
   });
-  revalidatePath(`/op/${parsed.data.operationId}/recipes`);
-  revalidatePath(`/op/${parsed.data.operationId}/shopping`);
+  revalidatePath(`/op/${parsed.data.operationId}/food/recipes`);
+  revalidatePath(`/op/${parsed.data.operationId}/food/shopping`);
 }
 
 const deleteRecipeSchema = z.object({
@@ -148,6 +148,6 @@ export async function deleteRecipe(formData: FormData): Promise<void> {
     eq(schema.recipes.id, parsed.data.recipeId),
     eq(schema.recipes.operationId, parsed.data.operationId),
   ));
-  revalidatePath(`/op/${parsed.data.operationId}/recipes`);
-  revalidatePath(`/op/${parsed.data.operationId}/menu`);
+  revalidatePath(`/op/${parsed.data.operationId}/food/recipes`);
+  revalidatePath(`/op/${parsed.data.operationId}/food/menu`);
 }

@@ -40,12 +40,12 @@ export function CheckView(
           role="alert"
           className={`rounded-card border-2 p-4 ${
             state.verdict === 'clear'
-              ? 'border-emerald-300 bg-emerald-50'
+              ? 'border-ok-border bg-ok-bg'
               : 'border-severe-border bg-severe-bg'
           }`}
         >
           <h2 className={`text-2xl font-black tracking-tight ${
-            state.verdict === 'clear' ? 'text-emerald-700' : 'text-severe'
+            state.verdict === 'clear' ? 'text-ok' : 'text-severe'
           }`}>
             {state.verdict === 'clear' ? 'CLEAR TO SERVE' : 'HOLD — DO NOT SERVE'}
           </h2>
@@ -59,15 +59,15 @@ export function CheckView(
           {state.conflicts !== undefined && state.conflicts.length > 0 && (
             <ul className="mt-3 space-y-2">
               {state.conflicts.map((c, i) => (
-                <li key={`${c.volunteerId}-${c.tag}-${i}`} className="rounded-md border border-black/10 bg-white p-3">
+                <li key={`${c.volunteerId}-${c.tag}-${i}`} className="rounded-md border border-tr-line bg-tr-slate p-3">
                   <div className="flex flex-wrap items-center gap-2">
                     <SeverityChip severity={c.severity} />
-                    <span className="font-semibold text-tr-charcoal">{c.volunteerName}</span>
-                    <span className="text-sm text-tr-ink">
+                    <span className="font-semibold text-tr-white">{c.volunteerName}</span>
+                    <span className="text-sm text-tr-silver">
                       cannot have <strong className="capitalize">{c.tag.replace('-', ' ')}</strong>
                     </span>
                   </div>
-                  <p className="mt-1 text-sm text-tr-ink">
+                  <p className="mt-1 text-sm text-tr-silver">
                     Found in: <span className="font-mono">{c.ingredient}</span>
                     {c.via !== undefined && <span className="text-tr-grey"> — {c.via}</span>}
                   </p>

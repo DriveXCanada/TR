@@ -8,14 +8,14 @@
  * supplied by Team Rubicon Canada, and drop the banner only once the build is
  * actually sanctioned by them.
  */
-export function TrMark({ size = 32 }: { size?: number }): React.ReactNode {
+export function TrMark({ size = 34 }: { size?: number }): React.ReactNode {
   return (
     <span
       aria-hidden
       style={{ width: size, height: size }}
-      className="inline-flex shrink-0 items-center justify-center rounded-sm bg-tr-red font-black text-white"
+      className="inline-flex shrink-0 items-center justify-center bg-tr-red font-black text-white"
     >
-      <span style={{ fontSize: size * 0.42, lineHeight: 1 }}>TR</span>
+      <span style={{ fontSize: size * 0.4, lineHeight: 1, letterSpacing: '-0.03em' }}>TR</span>
     </span>
   );
 }
@@ -25,10 +25,12 @@ export function Wordmark({ subtitle }: { subtitle?: string }): React.ReactNode {
     <span className="flex items-center gap-3">
       <TrMark />
       <span className="leading-tight">
-        <span className="block text-sm font-bold uppercase tracking-wide text-white">
+        <span className="block text-sm font-black uppercase tracking-wide text-tr-white">
           Team Rubicon Canada
         </span>
-        <span className="block text-xs text-white/70">{subtitle ?? 'Built to Serve'}</span>
+        <span className="block text-[11px] uppercase tracking-[0.14em] text-tr-grey">
+          {subtitle ?? 'Built to Serve'}
+        </span>
       </span>
     </span>
   );
@@ -37,7 +39,7 @@ export function Wordmark({ subtitle }: { subtitle?: string }): React.ReactNode {
 export function PoweredByDriveX({ className = '' }: { className?: string }): React.ReactNode {
   return (
     <span className={`text-xs text-tr-grey ${className}`}>
-      Powered by <span className="font-semibold text-tr-ink">DriveX</span>
+      Powered by <span className="font-bold text-tr-silver">DriveX</span>
     </span>
   );
 }
@@ -45,8 +47,8 @@ export function PoweredByDriveX({ className = '' }: { className?: string }): Rea
 /** Shown until an official Team Rubicon Canada asset and sign-off are in place. */
 export function ConceptBanner(): React.ReactNode {
   return (
-    <div className="bg-tr-charcoal px-4 py-1.5 text-center text-[11px] text-white/80">
-      CONCEPT BUILD — not an official Team Rubicon product. Branding is a placeholder pending approval.
+    <div className="border-b border-tr-red-deep bg-tr-red-deep px-4 py-1 text-center text-[10px] font-bold uppercase tracking-[0.1em] text-white/90">
+      Concept build — not an official Team Rubicon product
     </div>
   );
 }

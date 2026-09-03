@@ -3,38 +3,68 @@ import type { Config } from 'tailwindcss';
 /**
  * Theme tokens. Two layers, deliberately separated:
  *
- * - Brand tokens (`tr-*`, `drivex-*`) carry the Team Rubicon Canada identity and
- *   are expected to change if this instance is re-themed for another partner.
+ * - Brand tokens (`tr-*`) carry the Team Rubicon Canada identity: red, charcoal,
+ *   greyshirt grey. Dark-first, because that is the bolder read and because a
+ *   screen in a field kitchen is often the brightest thing in the room.
+ *
  * - Functional severity tokens (`severe`, `intolerance`, `preference`) encode
- *   *meaning*, not brand. Severe is red because red means stop, everywhere.
- *   These must survive any rebrand — see README "Theming".
+ *   MEANING, not brand, and must survive any rebrand.
+ *
+ * The tension worth knowing about: brand red and "danger" red are the same
+ * colour. If red is used as general decoration, a severe-allergy warning stops
+ * standing out — the one thing on this screen that must never be missed. So
+ * brand red is confined to chrome (active nav, primary actions, rules), and
+ * large solid red fills are reserved exclusively for severity.
  */
 const config: Config = {
   content: ['./src/**/*.{ts,tsx}'],
   theme: {
     extend: {
       colors: {
-        // --- Brand (Team Rubicon Canada) ---
         tr: {
-          red: '#CE1126',
-          'red-dark': '#A10E1F',
-          charcoal: '#1A1A1A',
-          ink: '#2B2B2B',
-          grey: '#6B7280',
-          'greyshirt': '#8A8F98',
-          mist: '#F4F5F7',
-        },
-        drivex: { accent: '#0F62FE' },
+          // Surfaces, darkest to lightest.
+          black: '#0A0B0C',      // app chrome
+          charcoal: '#131518',   // page ground
+          slate: '#1C1F23',      // cards
+          raised: '#252A30',     // hover / raised
+          line: '#343B43',       // borders
 
-        // --- Functional severity (never rebrand these) ---
-        severe: { DEFAULT: '#B91C1C', bg: '#FEF2F2', border: '#FCA5A5' },
-        intolerance: { DEFAULT: '#B45309', bg: '#FFFBEB', border: '#FCD34D' },
-        preference: { DEFAULT: '#4B5563', bg: '#F9FAFB', border: '#D1D5DB' },
+          // Text.
+          grey: '#98A1AB',       // secondary — the greyshirt grey
+          silver: '#CBD2DA',     // body
+          white: '#F4F7FA',      // headings, used sparingly
+
+          // Brand.
+          red: '#CE1126',
+          'red-bright': '#E8253C',
+          'red-deep': '#8E0C1A',
+        },
+        drivex: { accent: '#3D8BFD' },
+
+        // --- Functional severity. Never rebrand these. ---
+        severe: {
+          DEFAULT: '#FF4D5E',
+          bg: '#3A0D14',
+          border: '#C62334',
+          solid: '#D91F33',
+        },
+        intolerance: {
+          DEFAULT: '#F2B13C',
+          bg: '#33260B',
+          border: '#A87C22',
+        },
+        preference: {
+          DEFAULT: '#A8B0B9',
+          bg: '#22262B',
+          border: '#3C434B',
+        },
+        ok: { DEFAULT: '#3FBF7F', bg: '#0E2A1D', border: '#2A7D55' },
       },
-      borderRadius: { card: '0.75rem' },
+      borderRadius: { card: '0.5rem' },
       fontFamily: {
         sans: ['ui-sans-serif', 'system-ui', '-apple-system', 'Segoe UI', 'Roboto', 'Helvetica Neue', 'Arial', 'sans-serif'],
       },
+      letterSpacing: { headline: '-0.02em' },
     },
   },
   plugins: [],

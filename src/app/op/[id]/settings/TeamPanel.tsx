@@ -24,11 +24,11 @@ export function TeamPanel(
 ): React.ReactNode {
   return (
     <div className="space-y-4">
-      <ul className="divide-y divide-black/5">
+      <ul className="divide-y divide-tr-line">
         {members.map((m) => (
           <li key={m.userId} className="flex flex-wrap items-center justify-between gap-2 py-2">
             <span className="text-sm">
-              <span className="font-medium text-tr-charcoal">{m.name}</span>
+              <span className="font-medium text-tr-white">{m.name}</span>
               <span className="ml-2 font-mono text-xs text-tr-grey">{m.username}</span>
               <span className="ml-2 chip chip-preference">{m.role}</span>
             </span>

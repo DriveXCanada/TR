@@ -37,7 +37,7 @@ export function SlotSelector(
             type="button"
             onClick={() => go({ slot: s })}
             className={`rounded-md px-3 py-2 text-sm font-medium capitalize transition ${
-              s === slot ? 'bg-tr-red text-white' : 'border border-black/15 bg-white text-tr-ink hover:bg-tr-mist'
+              s === slot ? 'bg-tr-red text-white' : 'border border-tr-line bg-tr-slate text-tr-silver hover:bg-tr-charcoal'
             }`}
           >
             {s}

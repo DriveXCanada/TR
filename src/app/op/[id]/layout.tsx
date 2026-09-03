@@ -1,7 +1,6 @@
 import { requireSession } from '@/lib/auth/current';
 import { requireOpAccess } from '@/lib/data/access';
 import { AppHeader } from '@/components/AppHeader';
-import { OpNav } from '@/components/OpNav';
 
 export default async function OperationLayout(
   { children, params }: { children: React.ReactNode; params: Promise<{ id: string }> },
@@ -12,9 +11,8 @@ export default async function OperationLayout(
 
   return (
     <div className="min-h-screen">
-      <AppHeader opName={op.name} userName={session.name} />
-      <OpNav opId={id} />
-      <main className="mx-auto max-w-6xl px-4 py-6">{children}</main>
+      <AppHeader opName={op.name} userName={session.name} isMaster={session.isMaster} />
+      {children}
     </div>
   );
 }

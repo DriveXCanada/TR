@@ -12,13 +12,13 @@ export default async function LoginPage(): Promise<React.ReactNode> {
   return (
     <main className="min-h-screen">
       <ConceptBanner />
-      <div className="bg-tr-charcoal px-4 py-4">
+      <div className="bg-tr-black px-4 py-4">
         <div className="mx-auto max-w-md"><Wordmark subtitle="Field Operations" /></div>
       </div>
 
       <div className="mx-auto mt-10 max-w-md px-4">
         <div className="card p-6">
-          <h1 className="mb-1 text-xl font-semibold text-tr-charcoal">Sign in</h1>
+          <h1 className="mb-1 text-xl font-semibold text-tr-white">Sign in</h1>
           <p className="mb-5 text-sm text-tr-grey">
             Lead and assistant access. There is no public sign-up — accounts are issued by your Food Unit Leader.
           </p>

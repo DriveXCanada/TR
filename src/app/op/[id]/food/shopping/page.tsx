@@ -18,7 +18,7 @@ export default async function ShoppingPage(
   return (
     <div className="space-y-6">
       <div className="no-print flex flex-wrap items-center justify-between gap-3">
-        <h1 className="text-xl font-semibold text-tr-charcoal">Shopping list</h1>
+        <h1 className="text-xl font-semibold text-tr-white">Shopping list</h1>
         <div className="flex gap-2">
           <a className="btn-secondary" href={`/api/op/${id}/shopping.csv`}>Download CSV</a>
         </div>
@@ -57,7 +57,7 @@ export default async function ShoppingPage(
             <div className="overflow-x-auto">
               <table className="w-full min-w-[720px] text-sm">
                 <thead>
-                  <tr className="border-b border-black/10 text-left text-xs uppercase tracking-wide text-tr-grey">
+                  <tr className="border-b border-tr-line text-left text-xs uppercase tracking-wide text-tr-grey">
                     <th className="py-2 pr-3">Ingredient</th>
                     <th className="px-2 py-2 text-right">Required</th>
                     <th className="px-2 py-2 text-right">On hand</th>
@@ -69,9 +69,9 @@ export default async function ShoppingPage(
                 </thead>
                 <tbody>
                   {list.lines.filter((l) => l.category === category.category).map((line) => (
-                    <tr key={line.ingredientId} className="border-b border-black/5 align-top">
+                    <tr key={line.ingredientId} className="border-b border-tr-line align-top">
                       <td className="py-2 pr-3">
-                        <span className="font-medium text-tr-charcoal">{line.name}</span>
+                        <span className="font-medium text-tr-white">{line.name}</span>
                         <form action={setHaveOnHand} className="no-print mt-1 flex items-center gap-1">
                           <input type="hidden" name="operationId" value={id} />
                           <input type="hidden" name="ingredientId" value={line.ingredientId} />

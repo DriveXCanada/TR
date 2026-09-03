@@ -21,12 +21,12 @@ export default async function JoinPage(
   return (
     <main className="min-h-screen">
       <ConceptBanner />
-      <div className="bg-tr-charcoal px-4 py-4">
+      <div className="bg-tr-black px-4 py-4">
         <div className="mx-auto max-w-xl"><Wordmark subtitle="Volunteer sign-in" /></div>
       </div>
 
       <div className="mx-auto max-w-xl px-4 py-6">
-        <h1 className="mb-1 text-xl font-bold text-tr-charcoal">{operation.name}</h1>
+        <h1 className="mb-1 text-xl font-bold text-tr-white">{operation.name}</h1>
         <p className="mb-5 text-sm text-tr-grey">{operation.location}</p>
 
         <JoinWizard

@@ -24,7 +24,7 @@ export default async function OperationsPage(): Promise<React.ReactNode> {
   return (
     <main className="min-h-screen">
       <ConceptBanner />
-      <header className="bg-tr-charcoal px-4 py-4">
+      <header className="bg-tr-black px-4 py-4">
         <div className="mx-auto flex max-w-4xl items-center justify-between gap-4">
           <Wordmark subtitle="Field Operations" />
           <div className="flex items-center gap-4">
@@ -43,7 +43,7 @@ export default async function OperationsPage(): Promise<React.ReactNode> {
       </header>
 
       <div className="mx-auto max-w-4xl px-4 py-8">
-        <h1 className="mb-4 text-2xl font-semibold text-tr-charcoal">Operations</h1>
+        <h1 className="mb-4 text-2xl font-semibold text-tr-white">Operations</h1>
 
         {ops.length === 0 ? (
           <div className="card p-6 text-sm text-tr-grey">
@@ -57,7 +57,7 @@ export default async function OperationsPage(): Promise<React.ReactNode> {
               <li key={op.id}>
                 <Link href={`/op/${op.id}`} className="card block p-4 transition hover:border-tr-red">
                   <div className="flex items-baseline justify-between gap-3">
-                    <span className="font-semibold text-tr-charcoal">{op.name}</span>
+                    <span className="font-semibold text-tr-white">{op.name}</span>
                     <span className="text-xs uppercase tracking-wide text-tr-grey">{op.status}</span>
                   </div>
                   <p className="mt-1 text-sm text-tr-grey">

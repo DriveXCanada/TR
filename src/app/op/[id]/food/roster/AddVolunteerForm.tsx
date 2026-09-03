@@ -55,7 +55,7 @@ export function AddVolunteerForm(
       <label className="text-sm sm:col-span-3"><span className="label">Auto-injector location</span>
         <input name="epipenLocation" className="input" placeholder="e.g. right thigh pocket; spare in the kitchen first-aid box" /></label>
 
-      <fieldset className="sm:col-span-3 rounded-md border border-black/10 p-3">
+      <fieldset className="sm:col-span-3 rounded-md border border-tr-line p-3">
         <legend className="px-1 text-xs uppercase tracking-wide text-tr-grey">First restriction (optional)</legend>
         <div className="grid gap-3 sm:grid-cols-3">
           <label className="text-sm"><span className="label">Restriction</span>
@@ -76,7 +76,7 @@ export function AddVolunteerForm(
         <p role="alert" className="sm:col-span-3 text-sm text-severe">{state.error}</p>
       )}
       {state.ok !== undefined && (
-        <p role="status" className="sm:col-span-3 text-sm text-emerald-700">{state.ok}</p>
+        <p role="status" className="sm:col-span-3 text-sm text-ok">{state.ok}</p>
       )}
 
       <div className="sm:col-span-3">

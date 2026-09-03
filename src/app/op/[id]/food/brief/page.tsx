@@ -68,8 +68,8 @@ export default async function BriefPage(
       </div>
 
       <article className="card space-y-5 p-6 print:border-0 print:shadow-none">
-        <header className="border-b border-black/10 pb-3">
-          <h1 className="text-2xl font-bold text-tr-charcoal">Daily brief — {day}</h1>
+        <header className="border-b border-tr-line pb-3">
+          <h1 className="text-2xl font-bold text-tr-white">Daily brief — {day}</h1>
           <p className="text-sm text-tr-grey">
             {operation.name} · {operation.location} · Team Rubicon Canada · Powered by DriveX
           </p>
@@ -89,7 +89,7 @@ export default async function BriefPage(
         <section>
           <h2 className="mb-2 text-sm font-bold uppercase tracking-wide text-severe">Safety — read before service</h2>
           {severePeople.length === 0 ? (
-            <p className="text-sm text-tr-ink">
+            <p className="text-sm text-tr-silver">
               No severe allergies among the {onDay} on site today. Soft restrictions still apply — see the summary below.
             </p>
           ) : (
@@ -97,12 +97,12 @@ export default async function BriefPage(
               {severePeople.map(({ v, r }, i) => (
                 <li key={`${v.id}-${r.key}-${i}`} className="rounded-md border-2 border-severe-border bg-severe-bg p-3">
                   <div className="flex flex-wrap items-baseline gap-2">
-                    <span className="font-bold text-tr-charcoal">{v.firstName} {v.lastName}</span>
+                    <span className="font-bold text-tr-white">{v.firstName} {v.lastName}</span>
                     <span className="text-xs text-tr-grey">{v.icsRole}</span>
                     <span className="font-bold uppercase text-severe">{r.key}</span>
                   </div>
-                  {r.note !== null && <p className="mt-1 text-sm text-tr-ink">{r.note}</p>}
-                  <p className="mt-1 text-xs text-tr-ink">
+                  {r.note !== null && <p className="mt-1 text-sm text-tr-silver">{r.note}</p>}
+                  <p className="mt-1 text-xs text-tr-silver">
                     On site:{' '}
                     {operation.mealSchedule
                       .filter((m) => crewForSlot([v], day, m, operation.mealSchedule).length > 0)
@@ -143,9 +143,9 @@ export default async function BriefPage(
                 const severe = conflicts.filter((c) => c.severity === 'severe');
 
                 return (
-                  <div key={slot} className="rounded-md border border-black/10 p-3">
+                  <div key={slot} className="rounded-md border border-tr-line p-3">
                     <div className="flex flex-wrap items-baseline justify-between gap-2">
-                      <span className="font-semibold capitalize text-tr-charcoal">{slot}</span>
+                      <span className="font-semibold capitalize text-tr-white">{slot}</span>
                       <span className="text-xs text-tr-grey">
                         {crew.length} to serve · {money(planned?.cost ?? 0, operation.currency)}
                         {slot === 'lunch' && ' · packed, cold'}
@@ -154,7 +154,7 @@ export default async function BriefPage(
                     {dishes.length === 0 ? (
                       <p className="mt-1 text-sm text-severe">Nothing planned.</p>
                     ) : (
-                      <ul className="mt-1 list-inside list-disc text-sm text-tr-ink">
+                      <ul className="mt-1 list-inside list-disc text-sm text-tr-silver">
                         {dishes.map((d) => <li key={d.id}>{d.name}</li>)}
                       </ul>
                     )}
@@ -172,9 +172,9 @@ export default async function BriefPage(
         <section>
           <h2 className="mb-2 text-sm font-bold uppercase tracking-wide text-tr-grey">Restrictions on site</h2>
           {totals.length === 0 ? (
-            <p className="text-sm text-tr-ink">None recorded.</p>
+            <p className="text-sm text-tr-silver">None recorded.</p>
           ) : (
-            <p className="text-sm text-tr-ink">
+            <p className="text-sm text-tr-silver">
               {totals.map(([key, v], i) => (
                 <span key={key}>
                   {i > 0 && ' · '}
@@ -189,9 +189,9 @@ export default async function BriefPage(
           <div>
             <h2 className="mb-2 text-sm font-bold uppercase tracking-wide text-tr-grey">Movements today</h2>
             {movements.length === 0 ? (
-              <p className="text-sm text-tr-ink">None.</p>
+              <p className="text-sm text-tr-silver">None.</p>
             ) : (
-              <ul className="space-y-1 text-sm text-tr-ink">
+              <ul className="space-y-1 text-sm text-tr-silver">
                 {movements.map((t) => (
                   <li key={t.id}>
                     <strong className="capitalize">{t.direction}</strong> — {t.fromLoc ?? '?'} → {t.toLoc ?? '?'}
@@ -205,7 +205,7 @@ export default async function BriefPage(
           </div>
           <div>
             <h2 className="mb-2 text-sm font-bold uppercase tracking-wide text-tr-grey">Staffing today</h2>
-            <ul className="text-sm text-tr-ink">
+            <ul className="text-sm text-tr-silver">
               {ICS_ROLES.map((role) => {
                 const actual = uniqueCrew.filter((v) => v.icsRole === role).length;
                 const target = demandToday.get(role) ?? 0;
@@ -223,14 +223,14 @@ export default async function BriefPage(
         {ambiguous.length > 0 && (
           <section>
             <h2 className="mb-2 text-sm font-bold uppercase tracking-wide text-intolerance">Unconfirmed stays</h2>
-            <p className="text-sm text-tr-ink">
+            <p className="text-sm text-tr-silver">
               Counted as present because their stay is ambiguous — confirm with them today:{' '}
               {ambiguous.map((v) => `${v.firstName} ${v.lastName}`).join(', ')}.
             </p>
           </section>
         )}
 
-        <footer className="border-t border-black/10 pt-3 text-xs text-tr-grey">
+        <footer className="border-t border-tr-line pt-3 text-xs text-tr-grey">
           Printed from Field Operations. Contains health data on identifiable people — do not leave this
           copy where the public can read it, and destroy it at demobilisation.
         </footer>
@@ -241,9 +241,9 @@ export default async function BriefPage(
 
 function Figure({ label, value, emphasis = false }: { label: string; value: string; emphasis?: boolean }): React.ReactNode {
   return (
-    <div className={`rounded-md border p-3 ${emphasis ? 'border-severe-border bg-severe-bg' : 'border-black/10'}`}>
+    <div className={`rounded-md border p-3 ${emphasis ? 'border-severe-border bg-severe-bg' : 'border-tr-line'}`}>
       <div className="text-xs uppercase tracking-wide text-tr-grey">{label}</div>
-      <div className={`mt-0.5 text-xl font-bold ${emphasis ? 'text-severe' : 'text-tr-charcoal'}`}>{value}</div>
+      <div className={`mt-0.5 text-xl font-bold ${emphasis ? 'text-severe' : 'text-tr-white'}`}>{value}</div>
     </div>
   );
 }
