@@ -17,6 +17,7 @@
     "test:e2e": "node e2e/smoke.mjs",
     "test:e2e:access": "node e2e/access.mjs",
     "test:e2e:admin": "node e2e/admin.mjs",
+    "test:e2e:brief": "node e2e/brief.mjs",
     "test:e2e:planner": "node e2e/planner.mjs",
     "test:watch": "vitest",
     "typecheck": "tsc --noEmit"
