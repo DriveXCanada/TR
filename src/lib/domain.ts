@@ -38,8 +38,6 @@ export const ICS_ROLES = [
   'FUL',
   'Core Ops',
   'Site Survey',
-  'AP',
-  'JITT',
 ] as const;
 export type IcsRole = (typeof ICS_ROLES)[number];
 
@@ -54,8 +52,6 @@ export const ICS_ROLE_LABELS: Record<IcsRole, string> = {
   FUL: 'Food Unit Leader',
   'Core Ops': 'Core Operations',
   'Site Survey': 'Site Survey',
-  AP: 'Assistance Provider',
-  JITT: 'Just-In-Time Trainee',
 };
 
 export const RECIPE_CATEGORIES = ['main', 'side', 'snack', 'drink', 'condiment', 'staple'] as const;

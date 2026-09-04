@@ -11,7 +11,8 @@ import { getDb, schema } from '@/lib/db';
 import type { SessionPayload } from '@/lib/auth/session';
 import type { IcsRole, Meal, RecipeCategory, Severity, Slot } from '@/lib/domain';
 import type { Stay } from '@/lib/presence';
-import { sanitizeSizes, type SizeMap } from '@/lib/sizes';
+import { sanitizeSizes, isSizeScheme, type SizeMap } from '@/lib/sizes';
+import { ISSUE_POLICIES, KIT_CATEGORIES, type KitItem } from '@/lib/kit';
 
 export interface VolunteerView extends Stay {
   readonly id: string;
@@ -77,6 +78,7 @@ export interface OperationView {
 }
 
 export interface OperationSnapshot {
+  readonly kit: readonly KitItem[];
   readonly operation: OperationView;
   readonly volunteers: readonly VolunteerView[];
   readonly recipes: readonly RecipeView[];
@@ -134,7 +136,7 @@ export async function loadSnapshot(operationId: string, session: SessionPayload)
   const operation = await requireOpAccess(operationId, session);
   const db = getDb();
 
-  const [volunteerRows, restrictionRows, recipeRows, recipeIngredientRows, ingredientRows, menuRows, itemRows, demandRows, travelRows] =
+  const [volunteerRows, restrictionRows, recipeRows, recipeIngredientRows, ingredientRows, menuRows, itemRows, demandRows, travelRows, kitRows] =
     await Promise.all([
       db.select().from(schema.volunteers).where(eq(schema.volunteers.operationId, operationId)),
       db.select().from(schema.restrictions),
@@ -145,6 +147,7 @@ export async function loadSnapshot(operationId: string, session: SessionPayload)
       db.select().from(schema.menuSlotItems),
       db.select().from(schema.resourceDemands).where(eq(schema.resourceDemands.operationId, operationId)),
       db.select().from(schema.travel).where(eq(schema.travel.operationId, operationId)),
+      db.select().from(schema.kitItems).where(eq(schema.kitItems.operationId, operationId)),
     ]);
 
   const volunteerIds = new Set(volunteerRows.map((v) => v.id));
@@ -180,8 +183,26 @@ export async function loadSnapshot(operationId: string, session: SessionPayload)
     itemsBySlot.set(item.menuSlotId, list);
   }
 
+  const kit: KitItem[] = kitRows.map((k) => ({
+    id: k.id,
+    name: k.name,
+    // Values are widened from text columns, so validate rather than assume.
+    category: (KIT_CATEGORIES as readonly string[]).includes(k.category)
+      ? (k.category as KitItem['category']) : 'other',
+    issuePolicy: (ISSUE_POLICIES as readonly string[]).includes(k.issuePolicy)
+      ? (k.issuePolicy as KitItem['issuePolicy']) : 'single_use',
+    intervalDays: k.intervalDays,
+    qtyPerPerson: num(k.qtyPerPerson, 1),
+    unit: k.unit,
+    sizeScheme: k.sizeScheme !== null && isSizeScheme(k.sizeScheme) ? k.sizeScheme : null,
+    stockOnHand: num(k.stockOnHand),
+    reorderLevel: num(k.reorderLevel),
+    leadTimeDays: k.leadTimeDays,
+  })).sort((a, b) => a.category.localeCompare(b.category) || a.name.localeCompare(b.name));
+
   return {
     operation,
+    kit,
     volunteers: volunteerRows.map((v) => ({
       id: v.id,
       firstName: v.firstName,

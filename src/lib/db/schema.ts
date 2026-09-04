@@ -169,6 +169,27 @@ export const mealChecks = pgTable('meal_checks', {
   checkedAt: timestamp('checked_at', { withTimezone: true }).notNull().defaultNow(),
 });
 
+export const kitItems = pgTable('kit_items', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  operationId: uuid('operation_id').notNull().references(() => operations.id, { onDelete: 'cascade' }),
+  name: text('name').notNull(),
+  category: text('category').notNull().default('ppe'),
+  /** single_use | per_deployment | periodic — see lib/kit.ts. */
+  issuePolicy: text('issue_policy').notNull().default('single_use'),
+  intervalDays: integer('interval_days').notNull().default(1),
+  qtyPerPerson: numeric('qty_per_person', { precision: 10, scale: 2 }).notNull().default('1'),
+  unit: text('unit').notNull().default('each'),
+  /** Null when the item is one-size. Otherwise a scheme from lib/sizes.ts. */
+  sizeScheme: text('size_scheme'),
+  stockOnHand: numeric('stock_on_hand', { precision: 12, scale: 2 }).notNull().default('0'),
+  reorderLevel: numeric('reorder_level', { precision: 12, scale: 2 }).notNull().default('0'),
+  leadTimeDays: integer('lead_time_days').notNull().default(2),
+  notes: text('notes'),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+});
+
+export type KitItemRow = typeof kitItems.$inferSelect;
+
 export type UserRow = typeof users.$inferSelect;
 export type OperationRow = typeof operations.$inferSelect;
 export type VolunteerRow = typeof volunteers.$inferSelect;

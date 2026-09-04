@@ -15,6 +15,13 @@
       "when": 1788479688661,
       "tag": "0001_worried_killmonger",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1788481086519,
+      "tag": "0002_military_nomad",
+      "breakpoints": true
     }
   ]
 }

@@ -138,7 +138,7 @@ export async function seed(): Promise<string> {
   // --- Resource demand: a rough target per role per day ---
   const targets: Partial<Record<(typeof ICS_ROLES)[number], number>> = {
     IC: 1, SO: 1, OSC: 1, PSC: 1, FSC: 1, LSC: 1, FUL: 1, PIO: 1,
-    'Core Ops': 24, 'Site Survey': 3, AP: 4, JITT: 4,
+    'Core Ops': 28, 'Site Survey': 7,
   };
   for (const day of daysBetween(OP_START, OP_END)) {
     for (const role of ICS_ROLES) {
@@ -151,7 +151,7 @@ export async function seed(): Promise<string> {
   // --- Travel ---
   await db.insert(schema.travel).values([
     { operationId: op.id, direction: 'inbound', day: OP_START, fromLoc: 'Winnipeg YWG', toLoc: 'Fictionville', flight: 'XX 412', dep: '07:20', arr: '09:05', rental: 'Van A — 7 seats', notes: 'Advance party' },
-    { operationId: op.id, direction: 'inbound', day: '2026-03-05', fromLoc: 'Winnipeg YWG', toLoc: 'Fictionville', flight: 'XX 418', dep: '11:40', arr: '13:25', rental: 'Van B — 12 seats', notes: 'JITT intake' },
+    { operationId: op.id, direction: 'inbound', day: '2026-03-05', fromLoc: 'Winnipeg YWG', toLoc: 'Fictionville', flight: 'XX 418', dep: '11:40', arr: '13:25', rental: 'Van B — 12 seats', notes: 'Second wave intake' },
     { operationId: op.id, direction: 'outbound', day: '2026-03-05', fromLoc: 'Fictionville', toLoc: 'Winnipeg YWG', flight: 'XX 419', dep: '15:10', arr: '16:55', rental: null, notes: 'Departs after lunch service' },
     { operationId: op.id, direction: 'outbound', day: OP_END, fromLoc: 'Fictionville', toLoc: 'Winnipeg YWG', flight: 'XX 430', dep: '18:00', arr: '19:45', rental: 'Van A return', notes: 'Demob' },
   ]);

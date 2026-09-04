@@ -122,6 +122,7 @@ export async function addRestriction(formData: FormData): Promise<void> {
 const staySchema = z.object({
   operationId: z.string().uuid(),
   volunteerId: z.string().uuid(),
+  icsRole: z.union([z.enum(ICS_ROLES), z.literal('')]).optional(),
   arriveDate: z.string().trim().optional(),
   arriveMeal: optionalMeal,
   departDate: z.string().trim().optional(),
@@ -135,6 +136,11 @@ export async function updateStay(formData: FormData): Promise<void> {
   await assertMember(parsed.data.operationId);
 
   await getDb().update(schema.volunteers).set({
+    // Only overwrite the role when one was actually chosen — a blank must not
+    // wipe an existing assignment.
+    ...(parsed.data.icsRole !== undefined && parsed.data.icsRole !== ''
+      ? { icsRole: parsed.data.icsRole }
+      : {}),
     arriveDate: blankToNull(parsed.data.arriveDate),
     arriveMeal: parsed.data.arriveMeal === '' ? null : parsed.data.arriveMeal ?? null,
     departDate: blankToNull(parsed.data.departDate),
