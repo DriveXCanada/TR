@@ -7,6 +7,7 @@ import { requireSession } from '@/lib/auth/current';
 import { getDb, schema } from '@/lib/db';
 import { requireOpAccess } from '@/lib/data/access';
 import { ICS_ROLES, MEALS, SEVERITIES } from '@/lib/domain';
+import { SIZE_SCHEMES, SCHEMES, isSizeScheme } from '@/lib/sizes';
 
 export interface RosterState { readonly error?: string; readonly ok?: string; }
 
@@ -145,4 +146,37 @@ export async function updateStay(formData: FormData): Promise<void> {
 
   revalidatePath(`/op/${parsed.data.operationId}/food/roster`);
   revalidatePath(`/op/${parsed.data.operationId}/food`);
+}
+
+
+const sizeSchema = z.object({
+  operationId: z.string().uuid(),
+  volunteerId: z.string().uuid(),
+});
+
+/** Sets one volunteer's PPE sizes from the roster row. */
+export async function updateSizes(formData: FormData): Promise<void> {
+  const parsed = sizeSchema.safeParse({
+    operationId: formData.get('operationId'),
+    volunteerId: formData.get('volunteerId'),
+  });
+  if (!parsed.success) return;
+  await assertMember(parsed.data.operationId);
+
+  const sizes: Record<string, string> = {};
+  for (const scheme of SIZE_SCHEMES) {
+    const raw = formData.get(`size_${scheme}`);
+    if (typeof raw !== 'string') continue;
+    const value = raw.trim();
+    if (value === '' || !isSizeScheme(scheme)) continue;
+    if (!SCHEMES[scheme].options.includes(value)) continue;
+    sizes[scheme] = value;
+  }
+
+  await getDb().update(schema.volunteers).set({ sizes }).where(and(
+    eq(schema.volunteers.id, parsed.data.volunteerId),
+    eq(schema.volunteers.operationId, parsed.data.operationId),
+  ));
+  revalidatePath(`/op/${parsed.data.operationId}/food/roster`);
+  revalidatePath(`/op/${parsed.data.operationId}/logistics/sizes`);
 }

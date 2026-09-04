@@ -19,6 +19,7 @@
     "test:e2e:admin": "node e2e/admin.mjs",
     "test:e2e:brief": "node e2e/brief.mjs",
     "test:e2e:planner": "node e2e/planner.mjs",
+    "test:e2e:sizes": "node e2e/sizes.mjs",
     "test:watch": "vitest",
     "typecheck": "tsc --noEmit"
   },

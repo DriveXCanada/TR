@@ -63,6 +63,11 @@ export const volunteers = pgTable('volunteers', {
   likes: jsonb('likes').$type<string[]>().notNull().default([]),
   dislikes: jsonb('dislikes').$type<string[]>().notNull().default([]),
   morale: jsonb('morale').$type<string[]>().notNull().default([]),
+  /**
+   * PPE sizes, scheme -> option (see lib/sizes.ts). Additive: an older build
+   * simply ignores this column, so reverting the code does not strand data.
+   */
+  sizes: jsonb('sizes').$type<Record<string, string>>().notNull().default({}),
   freeNote: text('free_note'),
   source: text('source').$type<'kiosk' | 'lead'>().notNull().default('lead'),
   consentAt: timestamp('consent_at', { withTimezone: true }),

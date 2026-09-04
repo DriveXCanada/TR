@@ -11,6 +11,7 @@ import { getDb, schema } from '@/lib/db';
 import type { SessionPayload } from '@/lib/auth/session';
 import type { IcsRole, Meal, RecipeCategory, Severity, Slot } from '@/lib/domain';
 import type { Stay } from '@/lib/presence';
+import { sanitizeSizes, type SizeMap } from '@/lib/sizes';
 
 export interface VolunteerView extends Stay {
   readonly id: string;
@@ -26,6 +27,7 @@ export interface VolunteerView extends Stay {
   readonly dislikes: readonly string[];
   readonly morale: readonly string[];
   readonly freeNote: string | null;
+  readonly sizes: SizeMap;
   readonly restrictions: readonly { key: string; severity: Severity; note: string | null }[];
 }
 
@@ -198,6 +200,7 @@ export async function loadSnapshot(operationId: string, session: SessionPayload)
       dislikes: v.dislikes,
       morale: v.morale,
       freeNote: v.freeNote,
+      sizes: sanitizeSizes(v.sizes),
       restrictions: restrictionsByVolunteer.get(v.id) ?? [],
     })).sort((a, b) => a.lastName.localeCompare(b.lastName)),
     recipes: recipeRows.map((r) => ({

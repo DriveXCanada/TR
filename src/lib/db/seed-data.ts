@@ -139,6 +139,25 @@ export const RECIPES: readonly SeedRecipe[] = [
     items: [ { key: 'water', qtyPerServing: 2, unit: 'each' } ] },
 ];
 
+/** Deterministic but varied sizes, so the sample tallies look like a real crew. */
+const SHIRTS = ['S', 'M', 'L', 'XL', '2XL'] as const;
+const GLOVES = ['S', 'M', 'L', 'XL'] as const;
+const BOOTS = ['7', '8', '9', '9.5', '10', '11', '12'] as const;
+const MASKS = ['Small', 'Regular', 'Large'] as const;
+
+export function seedSizesFor(index: number): Record<string, string> {
+  // A few volunteers deliberately have gaps — logistics must handle "unknown".
+  if (index % 11 === 0) return {};
+  const sizes: Record<string, string> = {
+    shirt: SHIRTS[index % SHIRTS.length] ?? 'L',
+    glove: GLOVES[index % GLOVES.length] ?? 'M',
+    boot: BOOTS[index % BOOTS.length] ?? '10',
+    helmet: 'Adjustable',
+  };
+  if (index % 5 !== 0) sizes.mask = MASKS[index % MASKS.length] ?? 'Regular';
+  return sizes;
+}
+
 export interface SeedVolunteer {
   first: string; last: string; role: IcsRole; phoneTail: string;
   arriveDate: string; arriveMeal: Meal;

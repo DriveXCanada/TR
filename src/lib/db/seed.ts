@@ -10,7 +10,7 @@ import { hashPin } from '../auth/password';
 import { daysBetween } from '../presence';
 import { ICS_ROLES } from '../domain';
 import {
-  INGREDIENTS, RECIPES, ROSTER, SAMPLE_MENU, OP_START, OP_END, PER_PERSON_PER_DAY,
+  INGREDIENTS, RECIPES, ROSTER, SAMPLE_MENU, OP_START, OP_END, PER_PERSON_PER_DAY, seedSizesFor,
 } from './seed-data';
 
 const OP_NAME = 'OP MAPLE SHIELD — Sample';
@@ -84,7 +84,7 @@ export async function seed(): Promise<string> {
   }
 
   // --- Roster ---
-  for (const person of ROSTER) {
+  for (const [index, person] of ROSTER.entries()) {
     const row = await db.insert(schema.volunteers).values({
       operationId: op.id,
       firstName: person.first,
@@ -102,6 +102,7 @@ export async function seed(): Promise<string> {
       likes: person.likes ?? [],
       dislikes: person.dislikes ?? [],
       morale: person.morale ?? [],
+      sizes: seedSizesFor(index),
       source: 'kiosk',
       consentAt: new Date(),
     }).returning();

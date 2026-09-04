@@ -6,6 +6,7 @@ import { z } from 'zod';
 import { getDb, schema } from '@/lib/db';
 import { rateLimit, pruneRateLimits } from '@/lib/rate-limit';
 import { ICS_ROLES, MEALS, SEVERITIES } from '@/lib/domain';
+import { sanitizeSizes } from '@/lib/sizes';
 
 export interface JoinState {
   readonly ok?: boolean;
@@ -32,6 +33,7 @@ const joinSchema = z.object({
   epipenCarrying: z.string().optional(),
   epipenLocation: z.string().trim().max(300).optional(),
   restrictions: z.string().optional(),
+  sizes: z.string().optional(),
   likes: z.string().trim().max(500).optional(),
   dislikes: z.string().trim().max(500).optional(),
   morale: z.string().trim().max(500).optional(),
@@ -87,6 +89,17 @@ export async function submitJoin(_prev: JoinState, formData: FormData): Promise<
     }
   }
 
+  // Sizes are sanitised against the known schemes — an unrecognised value is
+  // dropped rather than stored, so a tally can never invent a size.
+  let sizes: Record<string, string> = {};
+  if (parsed.data.sizes !== undefined && parsed.data.sizes.trim() !== '') {
+    try {
+      sizes = sanitizeSizes(JSON.parse(parsed.data.sizes)) as Record<string, string>;
+    } catch {
+      sizes = {};
+    }
+  }
+
   const created = await db.insert(schema.volunteers).values({
     operationId: operation.id,
     firstName: parsed.data.firstName,
@@ -107,6 +120,7 @@ export async function submitJoin(_prev: JoinState, formData: FormData): Promise<
     dislikes: csv(parsed.data.dislikes),
     morale: csv(parsed.data.morale),
     freeNote: parsed.data.freeNote === '' ? null : parsed.data.freeNote ?? null,
+    sizes,
     source: 'kiosk',
     consentAt: new Date(),
   }).returning();

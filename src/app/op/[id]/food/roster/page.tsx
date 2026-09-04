@@ -5,7 +5,8 @@ import { isPresentForSlot, presenceWarnings, PRESENCE_WARNING_TEXT, daysBetween 
 import { ICS_ROLES, SLOTS, SEVERITY_RANK } from '@/lib/domain';
 import { SlotSelector } from '@/components/SlotSelector';
 import { Card, SeverityChip, Empty } from '@/components/ui';
-import { addRestriction, updateStay } from '@/lib/actions/roster';
+import { addRestriction, updateStay, updateSizes } from '@/lib/actions/roster';
+import { SIZE_SCHEMES, SCHEMES } from '@/lib/sizes';
 import { AddVolunteerForm } from './AddVolunteerForm';
 
 export const dynamic = 'force-dynamic';
@@ -85,6 +86,19 @@ export default async function RosterPage(
                             {operation.mealSchedule.map((m) => <option key={m} value={m}>{m}</option>)}
                           </select></label>
                         <button type="submit" className="btn-secondary px-2 py-1 text-xs">Save stay</button>
+                      </form>
+
+                      <form action={updateSizes} className="flex flex-wrap items-end gap-2">
+                        <input type="hidden" name="operationId" value={id} />
+                        <input type="hidden" name="volunteerId" value={v.id} />
+                        {SIZE_SCHEMES.map((scheme) => (
+                          <label key={scheme} className="text-xs"><span className="label">{SCHEMES[scheme].label}</span>
+                            <select name={`size_${scheme}`} className="input w-28 py-1 text-sm" defaultValue={v.sizes[scheme] ?? ''}>
+                              <option value="">—</option>
+                              {SCHEMES[scheme].options.map((o) => <option key={o} value={o}>{o}</option>)}
+                            </select></label>
+                        ))}
+                        <button type="submit" className="btn-secondary px-2 py-1 text-xs">Save sizes</button>
                       </form>
 
                       <form action={addRestriction} className="flex flex-wrap items-end gap-2">

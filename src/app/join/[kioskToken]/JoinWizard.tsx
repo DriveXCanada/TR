@@ -3,6 +3,7 @@
 import { useActionState, useState } from 'react';
 import { submitJoin, type JoinState } from '@/lib/actions/join';
 import { ICS_ROLES, ICS_ROLE_LABELS, MEALS, type Severity } from '@/lib/domain';
+import { SIZE_SCHEMES, SCHEMES, type SizeMap } from '@/lib/sizes';
 
 /** Common restrictions, offered as taps rather than free text so they land as structured data. */
 const COMMON = [
@@ -25,7 +26,7 @@ const COMMON = [
 
 interface Picked { key: string; severity: Severity; note: string; }
 
-const STEPS = ['Consent', 'You', 'Food & medical', 'Auto-injector', 'Your meals', 'Preferences', 'Confirm'] as const;
+const STEPS = ['Consent', 'You', 'Kit sizes', 'Food & medical', 'Auto-injector', 'Your meals', 'Preferences', 'Confirm'] as const;
 
 export function JoinWizard(
   { kioskToken, operationName, days }: { kioskToken: string; operationName: string; days: readonly string[] },
@@ -36,6 +37,7 @@ export function JoinWizard(
   const [custom, setCustom] = useState('');
   const [carrying, setCarrying] = useState(false);
   const [lastDay, setLastDay] = useState('');
+  const [sizes, setSizes] = useState<SizeMap>({});
 
   function toggle(key: string): void {
     setPicked((prev) => prev.some((p) => p.key === key)
@@ -75,6 +77,7 @@ export function JoinWizard(
     <form action={action} className="card space-y-5 p-5">
       <input type="hidden" name="kioskToken" value={kioskToken} />
       <input type="hidden" name="restrictions" value={JSON.stringify(picked)} />
+      <input type="hidden" name="sizes" value={JSON.stringify(sizes)} />
 
       <ol className="flex flex-wrap gap-1 text-xs" aria-label="Progress">
         {STEPS.map((label, i) => (
@@ -121,6 +124,39 @@ export function JoinWizard(
       </section>
 
       <section hidden={step !== 2} className="space-y-3">
+        <h2 className="text-lg font-semibold text-tr-white">Kit sizes</h2>
+        <p className="text-sm text-tr-silver">
+          Logistics orders PPE before you arrive. Kit that does not fit does not get worn, so a guess here
+          costs somebody a day on site.
+        </p>
+        <div className="grid gap-3 sm:grid-cols-2">
+          {SIZE_SCHEMES.map((scheme) => (
+            <label key={scheme} className="text-sm">
+              <span className="label">{SCHEMES[scheme].prompt}</span>
+              <select
+                name={`size_${scheme}`}
+                className="input"
+                value={sizes[scheme] ?? ''}
+                onChange={(e) => setSizes((prev) => {
+                  const next = { ...prev };
+                  if (e.target.value === '') delete next[scheme];
+                  else next[scheme] = e.target.value;
+                  return next;
+                })}
+              >
+                <option value="">Not sure / prefer not to say</option>
+                {SCHEMES[scheme].options.map((o) => <option key={o} value={o}>{o}</option>)}
+              </select>
+            </label>
+          ))}
+        </div>
+        <p className="text-xs text-tr-grey">
+          Leave anything blank if you are unsure — logistics would rather chase one answer than issue the
+          wrong size to everyone.
+        </p>
+      </section>
+
+      <section hidden={step !== 3} className="space-y-3">
         <h2 className="text-lg font-semibold text-tr-white">Allergies, intolerances, diet</h2>
         <p className="text-sm text-tr-silver">
           Tap everything that applies. If something could send you to hospital, mark it <strong>Severe</strong> —
@@ -177,7 +213,7 @@ export function JoinWizard(
         )}
       </section>
 
-      <section hidden={step !== 3} className="space-y-3">
+      <section hidden={step !== 4} className="space-y-3">
         <h2 className="text-lg font-semibold text-tr-white">Auto-injector</h2>
         <p className="text-sm text-tr-silver">
           If you carry an EpiPen or similar, tell us exactly where it is. In an emergency somebody who
@@ -196,7 +232,7 @@ export function JoinWizard(
         )}
       </section>
 
-      <section hidden={step !== 4} className="space-y-3">
+      <section hidden={step !== 5} className="space-y-3">
         <h2 className="text-lg font-semibold text-tr-white">Which meals are you on site for?</h2>
         <p className="text-sm text-tr-silver">
           The kitchen cooks to a headcount per meal, so arriving at supper or leaving after lunch
@@ -233,7 +269,7 @@ export function JoinWizard(
         )}
       </section>
 
-      <section hidden={step !== 5} className="space-y-3">
+      <section hidden={step !== 6} className="space-y-3">
         <h2 className="text-lg font-semibold text-tr-white">Preferences (optional)</h2>
         <p className="text-sm text-tr-silver">
           Not safety information — this just helps the kitchen cook things people actually want after a hard day.

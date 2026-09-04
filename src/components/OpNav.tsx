@@ -24,6 +24,7 @@ const SECTIONS = {
     label: 'Logistics',
     tabs: [
       { href: '', label: 'Overview' },
+      { href: '/sizes', label: 'PPE sizes' },
       { href: '/travel', label: 'Travel' },
       { href: '/staffing', label: 'Staffing' },
     ],

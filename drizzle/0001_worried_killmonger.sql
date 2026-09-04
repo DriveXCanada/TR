@@ -1,0 +1,1 @@
+ALTER TABLE "volunteers" ADD COLUMN "sizes" jsonb DEFAULT '{}'::jsonb NOT NULL;

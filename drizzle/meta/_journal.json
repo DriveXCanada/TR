@@ -8,6 +8,13 @@
       "when": 1788378916237,
       "tag": "0000_round_the_captain",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1788479688661,
+      "tag": "0001_worried_killmonger",
+      "breakpoints": true
     }
   ]
 }
