@@ -3,7 +3,7 @@ import { loadSnapshot } from '@/lib/data/access';
 import { resolveSelection } from '@/lib/view-params';
 import { daysBetween } from '@/lib/presence';
 import { SLOTS } from '@/lib/domain';
-import { needForDay, planItems, formatQty, ISSUE_POLICY_LABELS, KIT_CATEGORIES } from '@/lib/kit';
+import { needForDay, planItems, formatQty, splitKitAudience, ISSUE_POLICY_LABELS, KIT_CATEGORIES } from '@/lib/kit';
 import { KIT_TEMPLATES } from '@/lib/kit-templates';
 import { loadKitTemplate, setStock, updateKitItem, deleteKitItem } from '@/lib/actions/kit';
 import { ISSUE_POLICIES } from '@/lib/kit';
@@ -27,8 +27,10 @@ export default async function InventoryPage(
 
   const allDays = daysBetween(operation.startDate, operation.endDate);
   const todayIso = new Date().toISOString().slice(0, 10);
-  const needs = needForDay(kit, volunteers, day, operation.startDate, operation.mealSchedule);
-  const plans = planItems(kit, volunteers, operation.startDate, operation.endDate, todayIso, operation.mealSchedule);
+  // Kit counts only those who draw kit. Food headcount elsewhere is untouched.
+  const { drawsKit, exempt } = splitKitAudience(volunteers, operation.kitExemptRoles);
+  const needs = needForDay(kit, drawsKit, day, operation.startDate, operation.mealSchedule);
+  const plans = planItems(kit, drawsKit, operation.startDate, operation.endDate, todayIso, operation.mealSchedule);
   const urgent = plans.filter((p) => p.urgent);
 
   return (
@@ -40,6 +42,14 @@ export default async function InventoryPage(
         </div>
         <SlotSelector days={days} slots={SLOTS} day={day} slot="supper" />
       </header>
+
+      {exempt.length > 0 && (
+        <p className="rounded border border-tr-line bg-tr-slate px-3 py-2 text-sm text-tr-grey">
+          <strong className="text-tr-silver">{exempt.length}</strong> volunteer(s) in{' '}
+          {operation.kitExemptRoles.join(', ')} are excluded from kit counts. They are still counted for
+          food — change this on <span className="text-tr-silver">Staffing</span>.
+        </p>
+      )}
 
       {urgent.length > 0 && (
         <div role="alert" className="alarm">

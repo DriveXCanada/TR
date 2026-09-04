@@ -134,6 +134,59 @@ await step('an item can be switched between single-use and reusable', async () =
   return 'switched to per-deployment and the maths followed';
 });
 
+await step('exempting a role removes it from kit counts', async () => {
+  await go(`/op/${OP}/logistics/inventory?day=2026-03-04`);
+  await page.waitForSelector('text=/needed on/i');
+  const readGloves = async () => {
+    const lines = (await cardText(/needed on/i)).split('\n');
+    const i = lines.findIndex((l) => /nitrile gloves/i.test(l));
+    const m = lines.slice(i, i + 6).join(' ').match(/(\d+)\s+on site/);
+    return m === null ? -1 : Number(m[1]);
+  };
+  const before = await readGloves();
+  if (before <= 0) throw new Error(`could not read the baseline headcount (${before})`);
+
+  await go(`/op/${OP}/logistics/staffing`);
+  await page.waitForSelector('text=/who draws kit/i');
+  await page.click('[data-testid=kit-toggle-Core-Ops]');
+  await page.waitForTimeout(2500);
+
+  await go(`/op/${OP}/logistics/inventory?day=2026-03-04`);
+  await page.waitForSelector('text=/needed on/i');
+  const after = await readGloves();
+  if (after >= before) throw new Error(`exemption did not reduce the count: ${before} -> ${after}`);
+  return `${before} -> ${after} drawing kit`;
+});
+
+await step('THE guarantee: food headcount is untouched by the exemption', async () => {
+  await go(`/op/${OP}/food?day=2026-03-04&slot=supper`);
+  await page.waitForSelector('text=/on site/i');
+  const t = await main();
+  const m = t.match(/ON SITE . THIS DAY\s*\n\s*(\d+)/i);
+  if (m === null) throw new Error('could not read the food headcount');
+  const fed = Number(m[1]);
+  if (fed < 40) throw new Error(`food headcount collapsed to ${fed} — the exemption leaked into food`);
+  return `${fed} still being fed`;
+});
+
+await step('the inventory discloses who is excluded rather than hiding it', async () => {
+  await go(`/op/${OP}/logistics/inventory?day=2026-03-04`);
+  await page.waitForSelector('text=/needed on/i');
+  const t = await main();
+  if (!/excluded from kit counts/i.test(t)) throw new Error('exclusion not disclosed');
+  if (!/still counted for food/i.test(t)) throw new Error('does not say food is unaffected');
+  return 'exclusion disclosed on the page';
+});
+
+await step('the toggle reverses', async () => {
+  await go(`/op/${OP}/logistics/staffing`);
+  await page.waitForSelector('text=/who draws kit/i');
+  await page.click('[data-testid=kit-toggle-Core-Ops]');
+  await page.waitForTimeout(2500);
+  if (!/draws kit/i.test(await page.locator('main').innerText())) throw new Error('toggle did not come back on');
+  return 'restored';
+});
+
 await step('no 5xx and no page errors', async () => {
   if (errs.length > 0) throw new Error(errs.join(' | '));
   return 'clean';

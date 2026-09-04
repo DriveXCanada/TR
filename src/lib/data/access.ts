@@ -75,6 +75,8 @@ export interface OperationView {
   readonly retentionDays: number;
   readonly purgeAfter: string | null;
   readonly status: string;
+  /** ICS roles excluded from kit counting. Never consulted for food. */
+  readonly kitExemptRoles: readonly string[];
 }
 
 export interface OperationSnapshot {
@@ -129,6 +131,7 @@ export async function requireOpAccess(operationId: string, session: SessionPaylo
     retentionDays: op.retentionDays,
     purgeAfter: op.purgeAfter,
     status: op.status,
+    kitExemptRoles: op.kitExemptRoles,
   };
 }
 
@@ -263,5 +266,6 @@ function toView(op: typeof schema.operations.$inferSelect): OperationView {
     id: op.id, name: op.name, location: op.location, startDate: op.startDate, endDate: op.endDate,
     mealSchedule: op.mealSchedule, perPersonPerDay: num(op.perPersonPerDay), currency: op.currency,
     kioskToken: op.kioskToken, retentionDays: op.retentionDays, purgeAfter: op.purgeAfter, status: op.status,
+    kitExemptRoles: op.kitExemptRoles,
   };
 }

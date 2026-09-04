@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest';
-import { needForDay, planItems, arrivalsOn, roundQty, orderQty, formatQty, type KitItem, type Person } from './kit';
+import { needForDay, planItems, arrivalsOn, roundQty, orderQty, formatQty, splitKitAudience, type KitItem, type Person } from './kit';
 import type { SizeMap } from './sizes';
+import { peoplePresentOnDay } from './presence';
 
 const item = (over: Partial<KitItem> = {}): KitItem => ({
   id: 'i1', name: 'Nitrile gloves', category: 'ppe',
@@ -187,5 +188,53 @@ describe('rounding helpers', () => {
     expect(formatQty(12)).toBe('12');
     expect(formatQty(2.5)).toBe('2.5');
     expect(formatQty(2.0)).toBe('2');
+  });
+});
+
+
+describe('kit exemption — some roles draw no PPE but everyone eats', () => {
+  const roled = (icsRole: string, over: Partial<Person> = {}) => ({ ...person(over), icsRole });
+  const crew = [
+    roled('Core Ops'), roled('Core Ops'), roled('Core Ops'),
+    roled('IC'), roled('PIO'),
+  ];
+
+  it('splits the crew without losing anyone', () => {
+    const { drawsKit, exempt } = splitKitAudience(crew, ['IC', 'PIO']);
+    expect(drawsKit).toHaveLength(3);
+    expect(exempt).toHaveLength(2);
+    expect(drawsKit.length + exempt.length).toBe(crew.length);
+  });
+
+  it('kit demand drops to those who draw kit', () => {
+    const gloves = item({ unit: 'pair' });
+    const all = needForDay([gloves], crew, '2026-03-02', '2026-03-02')[0];
+    const { drawsKit } = splitKitAudience(crew, ['IC', 'PIO']);
+    const some = needForDay([gloves], drawsKit, '2026-03-02', '2026-03-02')[0];
+    expect(all?.qty).toBe(5);
+    expect(some?.qty).toBe(3);
+  });
+
+  it('THE guarantee: the food headcount is unchanged by any exemption', () => {
+    const beforeFood = peoplePresentOnDay(crew, '2026-03-02');
+    const { drawsKit, exempt } = splitKitAudience(crew, ['IC', 'PIO', 'Core Ops']);
+    // Even with every role exempt from kit, everyone is still on site to be fed.
+    expect(drawsKit).toHaveLength(0);
+    expect(peoplePresentOnDay(crew, '2026-03-02')).toBe(beforeFood);
+    expect(peoplePresentOnDay([...drawsKit, ...exempt], '2026-03-02')).toBe(beforeFood);
+  });
+
+  it('an empty exemption list changes nothing', () => {
+    const { drawsKit, exempt } = splitKitAudience(crew, []);
+    expect(drawsKit).toHaveLength(crew.length);
+    expect(exempt).toHaveLength(0);
+  });
+
+  it('matches roles case- and whitespace-insensitively', () => {
+    expect(splitKitAudience(crew, ['  core ops  ']).exempt).toHaveLength(3);
+  });
+
+  it('an unknown exempt role excludes nobody', () => {
+    expect(splitKitAudience(crew, ['Nonexistent']).drawsKit).toHaveLength(crew.length);
   });
 });

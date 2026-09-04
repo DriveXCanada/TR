@@ -85,3 +85,33 @@ export async function purgeNow(_prev: PurgeState, formData: FormData): Promise<P
   revalidatePath(`/op/${parsed.data.operationId}/food`);
   return { deleted: rows.length };
 }
+
+const exemptSchema = z.object({
+  operationId: z.string().uuid(),
+  role: z.string().trim().min(1),
+});
+
+/**
+ * Toggles whether an ICS role draws kit. Food is deliberately untouched: this
+ * value is read only by the logistics views.
+ */
+export async function toggleKitExemptRole(formData: FormData): Promise<void> {
+  const parsed = exemptSchema.safeParse(Object.fromEntries(formData));
+  if (!parsed.success) return;
+  await assertMember(parsed.data.operationId);
+
+  const db = getDb();
+  const rows = await db.select().from(schema.operations)
+    .where(eq(schema.operations.id, parsed.data.operationId)).limit(1);
+  const current = rows[0]?.kitExemptRoles ?? [];
+  const next = current.includes(parsed.data.role)
+    ? current.filter((r) => r !== parsed.data.role)
+    : [...current, parsed.data.role];
+
+  await db.update(schema.operations).set({ kitExemptRoles: next })
+    .where(eq(schema.operations.id, parsed.data.operationId));
+
+  revalidatePath(`/op/${parsed.data.operationId}/logistics/staffing`);
+  revalidatePath(`/op/${parsed.data.operationId}/logistics/inventory`);
+  revalidatePath(`/op/${parsed.data.operationId}/logistics/sizes`);
+}

@@ -35,6 +35,11 @@ export const operations = pgTable('operations', {
   retentionDays: integer('retention_days').notNull().default(30),
   purgeAfter: date('purge_after'),
   status: text('status').$type<OperationStatus>().notNull().default('planning'),
+  /**
+   * ICS roles excluded from kit and PPE counting. They are still fed — food
+   * headcount never consults this. Additive column; an older build ignores it.
+   */
+  kitExemptRoles: jsonb('kit_exempt_roles').$type<string[]>().notNull().default([]),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
 }, (t) => ({ kioskIdx: uniqueIndex('operations_kiosk_token_idx').on(t.kioskToken) }));
 

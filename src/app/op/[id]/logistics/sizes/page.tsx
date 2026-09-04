@@ -5,6 +5,7 @@ import { resolveSelection } from '@/lib/view-params';
 import { crewForSlot, peoplePresentOnDay, daysBetween } from '@/lib/presence';
 import { SLOTS } from '@/lib/domain';
 import { tallySizes, sizeCompleteness, SCHEMES, SIZE_SCHEMES } from '@/lib/sizes';
+import { splitKitAudience } from '@/lib/kit';
 import { SlotSelector } from '@/components/SlotSelector';
 import { Card, Empty } from '@/components/ui';
 
@@ -27,17 +28,19 @@ export default async function SizesPage(
   const { days, day } = resolveSelection(operation.startDate, operation.endDate, await searchParams);
 
   const allDays = daysBetween(operation.startDate, operation.endDate);
+  // Sizes exist to order PPE, so exempt roles are excluded here too.
+  const { drawsKit } = splitKitAudience(volunteers, operation.kitExemptRoles);
   const onDay = [...new Map(
-    operation.mealSchedule.flatMap((m) => crewForSlot(volunteers, day, m, operation.mealSchedule))
+    operation.mealSchedule.flatMap((m) => crewForSlot(drawsKit, day, m, operation.mealSchedule))
       .map((v) => [v.id, v]),
   ).values()];
 
   const tallies = tallySizes(onDay);
-  const coverage = sizeCompleteness(volunteers);
-  const peak = allDays.reduce((max, d) => Math.max(max, peoplePresentOnDay(volunteers, d, operation.mealSchedule)), 0);
-  const everyoneTallies = tallySizes(volunteers);
+  const coverage = sizeCompleteness(drawsKit);
+  const peak = allDays.reduce((max, d) => Math.max(max, peoplePresentOnDay(drawsKit, d, operation.mealSchedule)), 0);
+  const everyoneTallies = tallySizes(drawsKit);
 
-  const chase = volunteers.filter((v) => SIZE_SCHEMES.some((s) => v.sizes[s] === undefined));
+  const chase = drawsKit.filter((v) => SIZE_SCHEMES.some((s) => v.sizes[s] === undefined));
 
   return (
     <div className="space-y-6">

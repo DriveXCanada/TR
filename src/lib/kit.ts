@@ -216,3 +216,33 @@ export function planItems(
     };
   });
 }
+
+/**
+ * Splits the crew into those who draw kit and those who do not.
+ *
+ * Some roles are on site and eating but never draw PPE — command staff, a PIO
+ * visiting for a day. Excluding them from a glove count is correct; excluding
+ * them from a meal count would starve somebody. This function exists so that
+ * distinction is made in exactly one place, and its return type names both
+ * halves so a caller cannot silently pass the wrong one to a headcount.
+ */
+export interface KitAudience<T> {
+  /** Draw PPE and consumables. Use for kit demand only. */
+  readonly drawsKit: readonly T[];
+  /** On site but exempt. Still fed — never subtract these from a food count. */
+  readonly exempt: readonly T[];
+}
+
+export function splitKitAudience<T extends { icsRole: string }>(
+  people: readonly T[],
+  exemptRoles: readonly string[],
+): KitAudience<T> {
+  if (exemptRoles.length === 0) return { drawsKit: people, exempt: [] };
+  const exemptSet = new Set(exemptRoles.map((r) => r.trim().toLowerCase()));
+  const drawsKit: T[] = [];
+  const exempt: T[] = [];
+  for (const person of people) {
+    (exemptSet.has(person.icsRole.trim().toLowerCase()) ? exempt : drawsKit).push(person);
+  }
+  return { drawsKit, exempt };
+}

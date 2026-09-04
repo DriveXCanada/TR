@@ -1,0 +1,1 @@
+ALTER TABLE "operations" ADD COLUMN "kit_exempt_roles" jsonb DEFAULT '[]'::jsonb NOT NULL;
