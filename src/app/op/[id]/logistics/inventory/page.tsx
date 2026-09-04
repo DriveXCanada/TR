@@ -3,7 +3,7 @@ import { loadSnapshot } from '@/lib/data/access';
 import { resolveSelection } from '@/lib/view-params';
 import { daysBetween } from '@/lib/presence';
 import { SLOTS } from '@/lib/domain';
-import { needForDay, planItems, ISSUE_POLICY_LABELS, KIT_CATEGORIES } from '@/lib/kit';
+import { needForDay, planItems, formatQty, ISSUE_POLICY_LABELS, KIT_CATEGORIES } from '@/lib/kit';
 import { KIT_TEMPLATES } from '@/lib/kit-templates';
 import { loadKitTemplate, setStock, updateKitItem, deleteKitItem } from '@/lib/actions/kit';
 import { ISSUE_POLICIES } from '@/lib/kit';
@@ -52,7 +52,7 @@ export default async function InventoryPage(
               <li key={p.item.id} className="rounded border border-severe-border bg-tr-slate p-2">
                 <span className="font-bold text-tr-white">{p.item.name}</span>
                 <span className="ml-2 text-tr-silver">
-                  short {p.shortfall} {p.item.unit}
+                  short {formatQty(p.shortfall)} {p.item.unit}
                   {p.runsOutOn !== null && ` · runs out ${p.runsOutOn}`}
                   {p.orderBy !== null && ` · order by ${p.orderBy} (${p.item.leadTimeDays}d lead)`}
                 </span>
@@ -94,7 +94,7 @@ export default async function InventoryPage(
                       </span>
                     </td>
                     <td className="px-2 py-2 text-right font-bold text-tr-white">
-                      {need.qty > 0 ? `${need.qty} ${need.item.unit}` : '—'}
+                      {need.qty > 0 ? `${formatQty(need.qty)} ${need.item.unit}` : '—'}
                     </td>
                     <td className="px-2 py-2 text-xs text-tr-grey">{need.basis}</td>
                     <td className="px-2 py-2 text-xs">
@@ -131,20 +131,20 @@ export default async function InventoryPage(
                 {plans.map((plan) => (
                   <tr key={plan.item.id} className={`border-b border-tr-line align-top ${plan.urgent ? 'bg-severe-bg/40' : ''}`}>
                     <td className="py-2 pr-3 font-bold text-tr-white">{plan.item.name}</td>
-                    <td className="px-2 py-2 text-right">{plan.totalQty} {plan.item.unit}</td>
+                    <td className="px-2 py-2 text-right">{formatQty(plan.totalQty)} {plan.item.unit}</td>
                     <td className="px-2 py-2">
                       <form action={setStock} className="flex items-center gap-1">
                         <input type="hidden" name="operationId" value={id} />
                         <input type="hidden" name="itemId" value={plan.item.id} />
                         <input
                           name="stockOnHand" className="input w-24 py-1 text-sm" inputMode="decimal"
-                          defaultValue={String(plan.stockOnHand)} aria-label={`Stock on hand: ${plan.item.name}`}
+                          defaultValue={formatQty(plan.stockOnHand)} aria-label={`Stock on hand: ${plan.item.name}`}
                         />
                         <button type="submit" className="btn-secondary px-2 py-1 text-xs">Set</button>
                       </form>
                     </td>
                     <td className={`px-2 py-2 text-right font-bold ${plan.shortfall > 0 ? 'text-severe' : 'text-ok'}`}>
-                      {plan.shortfall > 0 ? plan.shortfall : '—'}
+                      {plan.shortfall > 0 ? formatQty(plan.shortfall) : '—'}
                     </td>
                     <td className="px-2 py-2 text-xs text-tr-grey">{plan.runsOutOn ?? 'covered'}</td>
                     <td className={`px-2 py-2 text-xs ${plan.urgent ? 'font-bold text-severe' : 'text-tr-grey'}`}>
@@ -191,7 +191,7 @@ export default async function InventoryPage(
                   <label className="text-xs"><span className="label">Every N days</span>
                     <input name="intervalDays" className="input py-1 text-sm" inputMode="numeric" defaultValue={String(k.intervalDays)} /></label>
                   <label className="text-xs"><span className="label">Qty / person</span>
-                    <input name="qtyPerPerson" className="input py-1 text-sm" inputMode="decimal" defaultValue={String(k.qtyPerPerson)} /></label>
+                    <input name="qtyPerPerson" className="input py-1 text-sm" inputMode="decimal" defaultValue={formatQty(k.qtyPerPerson)} /></label>
                   <label className="text-xs"><span className="label">Unit</span>
                     <input name="unit" className="input py-1 text-sm" defaultValue={k.unit} required /></label>
                   <label className="text-xs"><span className="label">Sized</span>
@@ -200,9 +200,9 @@ export default async function InventoryPage(
                       {SIZE_SCHEMES.map((s) => <option key={s} value={s}>{SCHEMES[s].label}</option>)}
                     </select></label>
                   <label className="text-xs"><span className="label">Stock</span>
-                    <input name="stockOnHand" className="input py-1 text-sm" inputMode="decimal" defaultValue={String(k.stockOnHand)} /></label>
+                    <input name="stockOnHand" className="input py-1 text-sm" inputMode="decimal" defaultValue={formatQty(k.stockOnHand)} /></label>
                   <label className="text-xs"><span className="label">Reorder at</span>
-                    <input name="reorderLevel" className="input py-1 text-sm" inputMode="decimal" defaultValue={String(k.reorderLevel)} /></label>
+                    <input name="reorderLevel" className="input py-1 text-sm" inputMode="decimal" defaultValue={formatQty(k.reorderLevel)} /></label>
                   <label className="text-xs"><span className="label">Lead days</span>
                     <input name="leadTimeDays" className="input py-1 text-sm" inputMode="numeric" defaultValue={String(k.leadTimeDays)} /></label>
                   <div className="flex items-end gap-2 sm:col-span-2">

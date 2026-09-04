@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { needForDay, planItems, arrivalsOn, type KitItem, type Person } from './kit';
+import { needForDay, planItems, arrivalsOn, roundQty, orderQty, formatQty, type KitItem, type Person } from './kit';
 import type { SizeMap } from './sizes';
 
 const item = (over: Partial<KitItem> = {}): KitItem => ({
@@ -131,5 +131,61 @@ describe('size breakdown', () => {
 
   it('returns no breakdown for an unsized item', () => {
     expect(needForDay([item()], crew, '2026-03-02', '2026-03-02')[0]?.sizes).toEqual([]);
+  });
+});
+
+
+describe('quantities are never floating-point dust', () => {
+  // The real symptom: hand sanitiser at 0.05 L across a crew reported a
+  // shortfall of 14.049999999999999 L.
+  const many = Array.from({ length: 47 }, () => person());
+
+  it('a fractional rate across a large crew stays clean', () => {
+    const gel = item({ name: 'Hand sanitiser', qtyPerPerson: 0.05, unit: 'L' });
+    const need = needForDay([gel], many, '2026-03-02', '2026-03-02')[0];
+    expect(need?.qty).toBe(2.35);
+    expect(String(need?.qty)).not.toMatch(/\d{6}/);
+  });
+
+  it('accumulating across a whole operation stays clean', () => {
+    const gel = item({ name: 'Hand sanitiser', qtyPerPerson: 0.05, unit: 'L' });
+    const plan = planItems([gel], many, '2026-03-02', '2026-03-06', '2026-03-02')[0];
+    expect(plan?.totalQty).toBe(11.75);
+    expect(String(plan?.totalQty)).not.toMatch(/\d{6}/);
+    expect(String(plan?.shortfall)).not.toMatch(/\d{6}/);
+  });
+
+  it('rounds a discrete shortfall UP — you cannot order 2.4 pairs', () => {
+    const gloves = item({ qtyPerPerson: 0.35, unit: 'pair', stockOnHand: 0 });
+    const plan = planItems([gloves], [person(), person(), person()], '2026-03-02', '2026-03-02', '2026-03-02')[0];
+    expect(plan?.totalQty).toBe(1.05);
+    expect(plan?.shortfall).toBe(2);
+  });
+
+  it('leaves measured units fractional rather than inflating them', () => {
+    const fuel = item({ qtyPerPerson: 0.8, unit: 'L', stockOnHand: 0 });
+    const plan = planItems([fuel], [person(), person(), person()], '2026-03-02', '2026-03-02', '2026-03-02')[0];
+    expect(plan?.shortfall).toBe(2.4);
+  });
+});
+
+describe('rounding helpers', () => {
+  it('roundQty clears the dust', () => {
+    expect(roundQty(14.049999999999999)).toBe(14.05);
+    expect(roundQty(0.1 + 0.2)).toBe(0.3);
+  });
+
+  it('orderQty rounds discrete units up and leaves measures alone', () => {
+    expect(orderQty(2.1, 'pair')).toBe(3);
+    expect(orderQty(2.1, 'each')).toBe(3);
+    expect(orderQty(2.1, 'L')).toBe(2.1);
+    expect(orderQty(3, 'each')).toBe(3);
+  });
+
+  it('formatQty drops trailing zeros and never shows a long tail', () => {
+    expect(formatQty(14.049999999999999)).toBe('14.05');
+    expect(formatQty(12)).toBe('12');
+    expect(formatQty(2.5)).toBe('2.5');
+    expect(formatQty(2.0)).toBe('2');
   });
 });

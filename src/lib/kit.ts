@@ -17,6 +17,31 @@ import { MEALS, type Meal } from './domain';
 import { peoplePresentOnDay, daysBetween, type Stay } from './presence';
 import { tallySizes, type SizeScheme, type Sized, type SizeTally } from './sizes';
 
+/**
+ * Units you can only buy whole. A shortfall of 2.4 pairs of gloves is three
+ * packets in the real world, so orderable quantities round UP for these and
+ * stay fractional for measures like litres.
+ */
+const DISCRETE_UNITS = new Set(['each', 'pair', 'set', 'box', 'roll', 'case', 'unit', 'packet', 'pack']);
+
+/** Kills floating-point dust: 0.05 x 281 is 14.049999999999999 without this. */
+export function roundQty(value: number): number {
+  return Math.round((value + Number.EPSILON) * 100) / 100;
+}
+
+/** What you actually order — whole units for things sold whole. */
+export function orderQty(value: number, unit: string): number {
+  return DISCRETE_UNITS.has(unit.trim().toLowerCase())
+    ? Math.ceil(roundQty(value))
+    : roundQty(value);
+}
+
+/** Display form: no trailing zeros, no exponent, no eleven decimal places. */
+export function formatQty(value: number): string {
+  const rounded = roundQty(value);
+  return Number.isInteger(rounded) ? String(rounded) : rounded.toFixed(2).replace(/\.?0+$/, '');
+}
+
 export const ISSUE_POLICIES = ['single_use', 'per_deployment', 'periodic'] as const;
 export type IssuePolicy = (typeof ISSUE_POLICIES)[number];
 
@@ -116,7 +141,7 @@ export function needForDay(
     return {
       item,
       people: group.length,
-      qty: group.length * item.qtyPerPerson,
+      qty: roundQty(group.length * item.qtyPerPerson),
       basis,
       sizes: item.sizeScheme === null ? [] : tallySizes(group, [item.sizeScheme]),
     };
@@ -165,12 +190,13 @@ export function planItems(
     for (const day of days) {
       const need = needForDay([item], people, day, startDate, schedule)[0];
       const qty = need?.qty ?? 0;
-      totalQty += qty;
-      running -= qty;
+      totalQty = roundQty(totalQty + qty);
+      running = roundQty(running - qty);
       if (running < 0 && runsOutOn === null) runsOutOn = day;
     }
 
-    const shortfall = Math.max(0, totalQty - item.stockOnHand);
+    // Rounded up for discrete units — you cannot order 2.4 pairs of gloves.
+    const shortfall = orderQty(Math.max(0, totalQty - item.stockOnHand), item.unit);
     let orderBy: string | null = null;
     if (runsOutOn !== null) {
       const target = new Date(`${runsOutOn}T00:00:00Z`);
