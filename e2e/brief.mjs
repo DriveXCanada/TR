@@ -26,7 +26,7 @@ await step('sign in', async()=>{
 
 await step('brief renders for a day with a severe allergy on site', async()=>{
   await page.goto(`${BASE}/op/${OP}/food/brief?day=2026-03-05`,{waitUntil:'domcontentloaded'});
-  await page.waitForSelector('text=/daily brief/i');
+  await page.waitForSelector('h1:has-text("Command brief")');
   const t=await main();
   if(!/safety — read before service/i.test(t)) throw new Error('no safety section');
   if(!t.includes('Priya')) throw new Error('severe-allergy volunteer missing');
@@ -53,7 +53,7 @@ await step('brief shows which meals each person is on site for', async()=>{
 
 await step('brief carries auto-injector locations', async()=>{
   await page.goto(`${BASE}/op/${OP}/food/brief?day=2026-03-05`,{waitUntil:'domcontentloaded'});
-  await page.waitForSelector('text=/daily brief/i');
+  await page.waitForSelector('h1:has-text("Command brief")');
   const t=await main();
   if(!/auto-injector locations/i.test(t)) throw new Error('no auto-injector section');
   if(!/belt pouch/i.test(t)) throw new Error('location text missing');
@@ -62,7 +62,7 @@ await step('brief carries auto-injector locations', async()=>{
 
 await step('brief shows the menu with per-slot headcount and cost', async()=>{
   await page.goto(`${BASE}/op/${OP}/food/brief?day=2026-03-04`,{waitUntil:'domcontentloaded'});
-  await page.waitForSelector('text=/daily brief/i');
+  await page.waitForSelector('h1:has-text("Command brief")');
   const t=await main();
   if(!/menu today/i.test(t)) throw new Error('no menu section');
   if(!/to serve/i.test(t)) throw new Error('no per-slot headcount');
@@ -73,7 +73,7 @@ await step('brief shows the menu with per-slot headcount and cost', async()=>{
 await step('brief flags a HOLD where a planned dish conflicts', async()=>{
   // 4 March has PB&J in the packed lunch and Priya (severe peanut) on site.
   await page.goto(`${BASE}/op/${OP}/food/brief?day=2026-03-04`,{waitUntil:'domcontentloaded'});
-  await page.waitForSelector('text=/daily brief/i');
+  await page.waitForSelector('h1:has-text("Command brief")');
   const t=await main();
   if(!/HOLD/.test(t)) throw new Error('no HOLD despite PB&J planned against a severe peanut allergy');
   if(!/Priya/.test(t)) throw new Error('HOLD does not name who it is for');
@@ -82,7 +82,7 @@ await step('brief flags a HOLD where a planned dish conflicts', async()=>{
 
 await step('brief shows headcount, budget, movements and staffing', async()=>{
   await page.goto(`${BASE}/op/${OP}/food/brief?day=2026-03-05`,{waitUntil:'domcontentloaded'});
-  await page.waitForSelector('text=/daily brief/i');
+  await page.waitForSelector('h1:has-text("Command brief")');
   const t=await main();
   for(const [label,re] of [['on site today',/on site today/i],['day budget',/day budget/i],
                            ['movements',/movements today/i],['staffing',/staffing today/i]]){
@@ -95,7 +95,7 @@ await step('brief shows headcount, budget, movements and staffing', async()=>{
 await step('brief warns about unconfirmed stays', async()=>{
   // 6 March: the open-ended volunteer has arrived by then.
   await page.goto(`${BASE}/op/${OP}/food/brief?day=2026-03-06`,{waitUntil:'domcontentloaded'});
-  await page.waitForSelector('text=/daily brief/i');
+  await page.waitForSelector('h1:has-text("Command brief")');
   const t=await main();
   if(!/unconfirmed stays/i.test(t)) throw new Error('no unconfirmed-stay warning (expected: one open-ended volunteer)');
   return 'unconfirmed stays called out';
@@ -103,7 +103,7 @@ await step('brief warns about unconfirmed stays', async()=>{
 
 await step('brief carries a handling warning for a printed copy', async()=>{
   await page.goto(`${BASE}/op/${OP}/food/brief?day=2026-03-05`,{waitUntil:'domcontentloaded'});
-  await page.waitForSelector('text=/daily brief/i');
+  await page.waitForSelector('h1:has-text("Command brief")');
   const t=await main();
   if(!/health data on identifiable people/i.test(t)) throw new Error('no handling warning');
   return 'print footer warns about the data';
@@ -111,7 +111,7 @@ await step('brief carries a handling warning for a printed copy', async()=>{
 
 await step('a day with nobody severe does not invent an alarm', async()=>{
   await page.goto(`${BASE}/op/${OP}/food/brief?day=2026-03-08`,{waitUntil:'domcontentloaded'});
-  await page.waitForSelector('text=/daily brief/i');
+  await page.waitForSelector('h1:has-text("Command brief")');
   const t=await main();
   if(!/safety — read before service/i.test(t)) throw new Error('safety section missing');
   return 'renders without fabricating warnings';

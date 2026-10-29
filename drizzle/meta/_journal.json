@@ -29,6 +29,20 @@
       "when": 1788482447369,
       "tag": "0003_neat_nightmare",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1793236425872,
+      "tag": "0004_wooden_lady_deathstrike",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1793237119844,
+      "tag": "0005_jittery_reavers",
+      "breakpoints": true
     }
   ]
 }

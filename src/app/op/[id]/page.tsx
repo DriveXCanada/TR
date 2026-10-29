@@ -60,9 +60,14 @@ export default async function OperationHome(
         />
       </div>
 
-      <Link href={`/op/${id}/settings`} className="inline-block text-sm text-tr-grey underline hover:text-tr-white">
-        Operation settings, team and kiosk QR
-      </Link>
+      <div className="flex flex-wrap gap-4 text-sm">
+        <Link href={`/op/${id}/food/brief`} className="text-tr-red-bright underline hover:text-tr-white">
+          Print today&apos;s command brief
+        </Link>
+        <Link href={`/op/${id}/settings`} className="text-tr-grey underline hover:text-tr-white">
+          Operation settings, team and kiosk QR
+        </Link>
+      </div>
     </main>
   );
 }

@@ -249,6 +249,9 @@ if (KIOSK !== undefined) {
     await kiosk.fill('input[name=firstName]', 'Wendeline');
     await kiosk.fill('input[name=lastName]', 'Quartermain');
     await kiosk.selectOption('select[name=icsRole]', 'Core Ops');
+    await next('Kit sizes');
+
+    // Sizes are optional; skip past them to keep this suite focused on presence.
     await next('Allergies, intolerances, diet');
 
     // Severe shellfish allergy, chosen by tap then escalated to severe.

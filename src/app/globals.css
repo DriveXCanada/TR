@@ -49,12 +49,64 @@ h1, h2, h3 { @apply tracking-headline; }
   .alarm-title { @apply flex items-center gap-2 text-lg font-black uppercase tracking-wide text-severe; }
 }
 
-/* Printed output is always light — ink on white, and no chrome. */
+/* ---------------------------------------------------------------------------
+   Print.
+
+   The screen app is dark; paper is not. Everything below forces ink-on-white
+   and strips chrome, because a printed sheet is carried into a kitchen or a
+   supply tent where the screen is not. Printed pages also leave the app's
+   access control behind, so every printable view carries its own header
+   identifying the operation and the day.
+   --------------------------------------------------------------------------- */
+.print-only { display: none; }
+
 @media print {
-  .no-print { display: none !important; }
   :root { color-scheme: light; }
-  body { background: #fff !important; color: #111 !important; }
-  .card, .alarm { background: #fff !important; border-color: #999 !important; }
-  .title, h1, h2, h3, strong { color: #000 !important; }
-  .muted, .label, .eyebrow { color: #444 !important; }
+
+  .no-print { display: none !important; }
+  .print-only { display: revert !important; }
+
+  body {
+    background: #fff !important;
+    color: #000 !important;
+    font-size: 10.5pt;
+  }
+
+  /* Flatten every surface — borders carry the structure, not fills. */
+  .card, .alarm, section, div, span, td, th, li, p, h1, h2, h3, strong, em, a {
+    background: transparent !important;
+    box-shadow: none !important;
+  }
+  .card, .alarm { border: 1px solid #999 !important; break-inside: avoid; }
+
+  h1, h2, h3, strong, .title { color: #000 !important; }
+  p, li, td, span, div { color: #111 !important; }
+  .muted, .label, .eyebrow, .note { color: #444 !important; }
+  a { color: #000 !important; text-decoration: none; }
+
+  table { width: 100%; border-collapse: collapse; font-size: 9.5pt; }
+  th, td { border-bottom: 1px solid #bbb !important; padding: 3pt 4pt !important; }
+  thead th { border-bottom: 1.5px solid #000 !important; color: #000 !important; }
+  thead { display: table-header-group; }   /* repeat headers across pages */
+  tr { break-inside: avoid; }
+
+  /* Severity has to survive losing colour — carry it on weight and a rule. */
+  .chip { border: 1px solid #555 !important; color: #000 !important; padding: 0 2pt !important; }
+  .chip-severe { border: 1.5px solid #000 !important; font-weight: 700 !important; }
+  .alarm { border: 2px solid #000 !important; }
+  .alarm-title { color: #000 !important; }
+
+  /* A box someone can tick with a pen. */
+  .tickbox {
+    display: inline-block; width: 11pt; height: 11pt;
+    border: 1.25px solid #000 !important; vertical-align: -1.5pt;
+  }
+
+  .print-head {
+    display: block !important;
+    border-bottom: 2px solid #000 !important;
+    padding-bottom: 6pt; margin-bottom: 10pt;
+  }
+
+  @page { margin: 14mm; }
 }

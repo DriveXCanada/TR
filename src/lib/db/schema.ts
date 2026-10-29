@@ -148,6 +148,20 @@ export const menuSlots = pgTable('menu_slots', {
   slot: text('slot').$type<Slot>().notNull(),
   /** null => use the computed headcount for that day + slot. */
   servings: integer('servings'),
+  /** Set when the meal was served and the pantry drawn down. Null = not served. */
+  servedAt: timestamp('served_at', { withTimezone: true }),
+  /**
+   * The servings the draw-down was calculated at, snapshotted at the moment of
+   * serving so an undo reverses exactly — even if the roster changed since.
+   */
+  servedServings: integer('served_servings'),
+  /**
+   * What was ACTUALLY taken out, per ingredient, at the moment of serving.
+   * Undo returns exactly this — not what the recipe says should have been
+   * used. Without it, serving against an empty pantry draws nothing but undo
+   * hands back the full amount, inventing stock that never existed.
+   */
+  servedDraws: jsonb('served_draws').$type<{ ingredientId: string; qty: number }[]>(),
 }, (t) => ({ slotIdx: uniqueIndex('menu_slots_op_day_slot_idx').on(t.operationId, t.day, t.slot) }));
 
 export const menuSlotItems = pgTable('menu_slot_items', {

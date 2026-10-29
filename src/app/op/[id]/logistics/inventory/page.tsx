@@ -5,12 +5,15 @@ import { daysBetween } from '@/lib/presence';
 import { SLOTS } from '@/lib/domain';
 import { needForDay, planItems, formatQty, splitKitAudience, ISSUE_POLICY_LABELS, KIT_CATEGORIES } from '@/lib/kit';
 import { KIT_TEMPLATES } from '@/lib/kit-templates';
-import { loadKitTemplate, setStock, updateKitItem, deleteKitItem } from '@/lib/actions/kit';
+import { loadKitTemplate, updateKitItem, deleteKitItem } from '@/lib/actions/kit';
 import { ISSUE_POLICIES } from '@/lib/kit';
 import { SIZE_SCHEMES, SCHEMES } from '@/lib/sizes';
 import { SlotSelector } from '@/components/SlotSelector';
 import { Card } from '@/components/ui';
 import { NewItemForm } from './InventoryForms';
+import { StockControl } from './StockControl';
+import { PrintButton } from '@/components/PrintButton';
+import { PrintHeader } from '@/components/PrintHeader';
 
 export const dynamic = 'force-dynamic';
 
@@ -35,12 +38,23 @@ export default async function InventoryPage(
 
   return (
     <div className="space-y-6">
-      <header className="flex flex-wrap items-end justify-between gap-3">
+      <PrintHeader
+        title="Inventory and resupply"
+        operationName={operation.name}
+        location={operation.location}
+        day={`Printed ${todayIso}`}
+        note="Stock figures are a running estimate, not a physical count."
+      />
+
+      <header className="no-print flex flex-wrap items-end justify-between gap-3">
         <div>
           <p className="eyebrow text-tr-red-bright">Logistics</p>
           <h1 className="mt-1 text-2xl font-black uppercase text-tr-white">Inventory</h1>
         </div>
-        <SlotSelector days={days} slots={SLOTS} day={day} slot="supper" />
+        <div className="flex flex-wrap items-end gap-2">
+          <PrintButton label="Print inventory" />
+          <SlotSelector days={days} slots={SLOTS} day={day} slot="supper" />
+        </div>
       </header>
 
       {exempt.length > 0 && (
@@ -143,15 +157,10 @@ export default async function InventoryPage(
                     <td className="py-2 pr-3 font-bold text-tr-white">{plan.item.name}</td>
                     <td className="px-2 py-2 text-right">{formatQty(plan.totalQty)} {plan.item.unit}</td>
                     <td className="px-2 py-2">
-                      <form action={setStock} className="flex items-center gap-1">
-                        <input type="hidden" name="operationId" value={id} />
-                        <input type="hidden" name="itemId" value={plan.item.id} />
-                        <input
-                          name="stockOnHand" className="input w-24 py-1 text-sm" inputMode="decimal"
-                          defaultValue={formatQty(plan.stockOnHand)} aria-label={`Stock on hand: ${plan.item.name}`}
-                        />
-                        <button type="submit" className="btn-secondary px-2 py-1 text-xs">Set</button>
-                      </form>
+                      <StockControl
+                        operationId={id} itemId={plan.item.id} name={plan.item.name}
+                        stockOnHand={plan.stockOnHand} unit={plan.item.unit}
+                      />
                     </td>
                     <td className={`px-2 py-2 text-right font-bold ${plan.shortfall > 0 ? 'text-severe' : 'text-ok'}`}>
                       {plan.shortfall > 0 ? formatQty(plan.shortfall) : '—'}
@@ -172,16 +181,16 @@ export default async function InventoryPage(
         </Card>
       )}
 
-      <Card title="Standard loadouts" subtitle="Additive and matched by name — safe to run twice, and layering a task template on the general one never duplicates the base PPE.">
+      <Card className="no-print" title="Standard loadouts" subtitle="Additive and matched by name — safe to run twice, and layering a task template on the general one never duplicates the base PPE.">
         <TemplateButtons operationId={id} />
       </Card>
 
-      <Card title="Add an item">
+      <Card className="no-print" title="Add an item">
         <NewItemForm operationId={id} />
       </Card>
 
       {kit.length > 0 && (
-        <Card title="Edit items" subtitle="Change how something is issued, its size scheme, or remove it.">
+        <Card className="no-print" title="Edit items" subtitle="Change how something is issued, its size scheme, or remove it.">
           <ul className="space-y-3">
             {kit.map((k) => (
               <li key={k.id} className="rounded border border-tr-line p-3">

@@ -3,6 +3,8 @@ import { loadSnapshot } from '@/lib/data/access';
 import { shoppingListForOperation } from '@/lib/shopping-from-menu';
 import { setHaveOnHand } from '@/lib/actions/recipes';
 import { Card, Stat, Empty, money } from '@/components/ui';
+import { PrintButton } from '@/components/PrintButton';
+import { PrintHeader } from '@/components/PrintHeader';
 
 export const dynamic = 'force-dynamic';
 
@@ -17,9 +19,17 @@ export default async function ShoppingPage(
 
   return (
     <div className="space-y-6">
+      <PrintHeader
+        title="Shopping list"
+        operationName={snapshot.operation.name}
+        location={snapshot.operation.location}
+        day={`Printed ${new Date().toISOString().slice(0, 10)}`}
+        note={`Covers ${snapshot.operation.startDate} to ${snapshot.operation.endDate}. Quantities are after pack rounding and already net of stock on hand.`}
+      />
       <div className="no-print flex flex-wrap items-center justify-between gap-3">
         <h1 className="text-xl font-semibold text-tr-white">Shopping list</h1>
         <div className="flex gap-2">
+          <PrintButton label="Print shopping list" />
           <a className="btn-secondary" href={`/api/op/${id}/shopping.csv`}>Download CSV</a>
         </div>
       </div>
@@ -58,6 +68,7 @@ export default async function ShoppingPage(
               <table className="w-full min-w-[720px] text-sm">
                 <thead>
                   <tr className="border-b border-tr-line text-left text-xs uppercase tracking-wide text-tr-grey">
+                    <th className="print-only">✓</th>
                     <th className="py-2 pr-3">Ingredient</th>
                     <th className="px-2 py-2 text-right">Required</th>
                     <th className="px-2 py-2 text-right">On hand</th>
@@ -70,6 +81,7 @@ export default async function ShoppingPage(
                 <tbody>
                   {list.lines.filter((l) => l.category === category.category).map((line) => (
                     <tr key={line.ingredientId} className="border-b border-tr-line align-top">
+                      <td className="print-only"><span className="tickbox" /></td>
                       <td className="py-2 pr-3">
                         <span className="font-medium text-tr-white">{line.name}</span>
                         <form action={setHaveOnHand} className="no-print mt-1 flex items-center gap-1">

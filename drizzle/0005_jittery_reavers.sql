@@ -1,0 +1,1 @@
+ALTER TABLE "menu_slots" ADD COLUMN "served_draws" jsonb;

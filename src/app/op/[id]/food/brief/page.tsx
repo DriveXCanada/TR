@@ -7,7 +7,10 @@ import { dailyBudget } from '@/lib/budget';
 import { costMenu } from '@/lib/menu-cost';
 import { checkConflicts } from '@/lib/conflict';
 import { SlotSelector } from '@/components/SlotSelector';
-import { PrintButton } from './PrintButton';
+import { PrintButton } from '@/components/PrintButton';
+import { PrintHeader } from '@/components/PrintHeader';
+import { needForDay, planItems, formatQty, splitKitAudience } from '@/lib/kit';
+import { budgetSummary } from '@/lib/budget';
 import { money } from '@/components/ui';
 
 export const dynamic = 'force-dynamic';
@@ -26,7 +29,7 @@ export default async function BriefPage(
   const session = await requireSession();
   const { id } = await params;
   const snapshot = await loadSnapshot(id, session);
-  const { operation, volunteers, recipes, ingredients, menu, travel, demands } = snapshot;
+  const { operation, volunteers, recipes, ingredients, menu, travel, demands, kit } = snapshot;
   const { days, day } = resolveSelection(operation.startDate, operation.endDate, await searchParams);
 
   const allDays = daysBetween(operation.startDate, operation.endDate);
@@ -57,6 +60,21 @@ export default async function BriefPage(
   const totals = [...restrictionTotals.entries()]
     .sort((a, b) => SEVERITY_RANK[a[1].severity] - SEVERITY_RANK[b[1].severity] || b[1].count - a[1].count);
 
+  // --- Logistics, so command staff get one sheet rather than two ---
+  const todayIso = new Date().toISOString().slice(0, 10);
+  const { drawsKit } = splitKitAudience(volunteers, operation.kitExemptRoles);
+  const kitNeeds = needForDay(kit, drawsKit, day, operation.startDate, operation.mealSchedule)
+    .filter((n) => n.qty > 0);
+  const kitPlans = planItems(kit, drawsKit, operation.startDate, operation.endDate, todayIso, operation.mealSchedule);
+  const resupply = kitPlans.filter((p) => p.urgent || p.shortfall > 0)
+    .sort((a, b) => Number(b.urgent) - Number(a.urgent));
+
+  // --- Budget, stated as an expectation rather than a running total ---
+  const opBudget = budgetSummary(volunteers, operation.startDate, operation.endDate,
+    operation.perPersonPerDay, operation.currency, operation.mealSchedule);
+  const plannedToDate = costs.filter((c) => c.day <= day).reduce((sum, c) => sum + c.cost, 0);
+  const budgetToDate = costs.filter((c) => c.day <= day).reduce((sum, c) => sum + c.budget, 0);
+
   const movements = travel.filter((t) => t.day === day);
   const demandToday = new Map(demands.filter((d) => d.day === day).map((d) => [d.icsRole, d.target]));
 
@@ -68,8 +86,15 @@ export default async function BriefPage(
       </div>
 
       <article className="card space-y-5 p-6 print:border-0 print:shadow-none">
-        <header className="border-b border-tr-line pb-3">
-          <h1 className="text-2xl font-bold text-tr-white">Daily brief — {day}</h1>
+        <PrintHeader
+          title={`Command brief — ${day}`}
+          operationName={operation.name}
+          location={operation.location}
+          day={day}
+          note="Contains health data on identifiable people. Do not leave where the public can read it; destroy at demobilisation."
+        />
+        <header className="border-b border-tr-line pb-3 no-print">
+          <h1 className="text-2xl font-bold text-tr-white">Command brief — {day}</h1>
           <p className="text-sm text-tr-grey">
             {operation.name} · {operation.location} · Team Rubicon Canada · Powered by DriveX
           </p>
@@ -170,6 +195,22 @@ export default async function BriefPage(
         </section>
 
         <section>
+          <h2 className="mb-2 text-sm font-bold uppercase tracking-wide text-tr-grey">Budget</h2>
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+            <Figure label="Today" value={money(today?.cost ?? 0, operation.currency)}
+              hint={`of ${money(today?.budget ?? 0, operation.currency)}`} emphasis={(today?.overBudget ?? false)} />
+            <Figure label="To date" value={money(plannedToDate, operation.currency)}
+              hint={`of ${money(budgetToDate, operation.currency)}`} emphasis={plannedToDate > budgetToDate} />
+            <Figure label="Operation total" value={money(opBudget.totalBudget, operation.currency)}
+              hint={`${money(operation.perPersonPerDay, operation.currency)}/person/day`} />
+            <Figure label="Person-days" value={String(opBudget.totalPeopleDays)} hint="drives the total" />
+          </div>
+          <p className="mt-2 text-xs text-tr-grey">
+            Food cost is consumption at unit price. The shopping list is higher because it rounds to whole packs.
+          </p>
+        </section>
+
+        <section>
           <h2 className="mb-2 text-sm font-bold uppercase tracking-wide text-tr-grey">Restrictions on site</h2>
           {totals.length === 0 ? (
             <p className="text-sm text-tr-silver">None recorded.</p>
@@ -220,6 +261,41 @@ export default async function BriefPage(
           </div>
         </section>
 
+        {(kitNeeds.length > 0 || resupply.length > 0) && (
+          <section>
+            <h2 className="mb-2 text-sm font-bold uppercase tracking-wide text-tr-grey">Logistics</h2>
+            {resupply.length > 0 && (
+              <div className="mb-3 rounded-md border-2 border-severe-border bg-severe-bg p-3">
+                <p className="text-sm font-bold uppercase text-severe">
+                  Resupply — {resupply.filter((r) => r.urgent).length} past the order date
+                </p>
+                <ul className="mt-2 space-y-1 text-sm">
+                  {resupply.slice(0, 8).map((p) => (
+                    <li key={p.item.id}>
+                      <strong>{p.item.name}</strong> — short {formatQty(p.shortfall)} {p.item.unit}
+                      {p.orderBy !== null && ` · order by ${p.orderBy}`}
+                      {p.urgent && <strong className="text-severe"> · OVERDUE</strong>}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+            {kitNeeds.length > 0 && (
+              <>
+                <p className="text-sm text-tr-silver">Issued today:</p>
+                <ul className="mt-1 grid gap-x-6 text-sm sm:grid-cols-2">
+                  {kitNeeds.map((n) => (
+                    <li key={n.item.id}>
+                      {n.item.name} — <strong>{formatQty(n.qty)} {n.item.unit}</strong>
+                      <span className="text-tr-grey"> ({n.basis})</span>
+                    </li>
+                  ))}
+                </ul>
+              </>
+            )}
+          </section>
+        )}
+
         {ambiguous.length > 0 && (
           <section>
             <h2 className="mb-2 text-sm font-bold uppercase tracking-wide text-intolerance">Unconfirmed stays</h2>
@@ -239,11 +315,14 @@ export default async function BriefPage(
   );
 }
 
-function Figure({ label, value, emphasis = false }: { label: string; value: string; emphasis?: boolean }): React.ReactNode {
+function Figure(
+  { label, value, hint, emphasis = false }: { label: string; value: string; hint?: string; emphasis?: boolean },
+): React.ReactNode {
   return (
     <div className={`rounded-md border p-3 ${emphasis ? 'border-severe-border bg-severe-bg' : 'border-tr-line'}`}>
       <div className="text-xs uppercase tracking-wide text-tr-grey">{label}</div>
       <div className={`mt-0.5 text-xl font-bold ${emphasis ? 'text-severe' : 'text-tr-white'}`}>{value}</div>
+      {hint !== undefined && <div className="mt-0.5 text-xs text-tr-grey">{hint}</div>}
     </div>
   );
 }

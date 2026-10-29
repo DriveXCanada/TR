@@ -7,6 +7,9 @@ import { requireSession } from '@/lib/auth/current';
 import { getDb, schema } from '@/lib/db';
 import { requireOpAccess } from '@/lib/data/access';
 import { SLOTS, type Slot } from '@/lib/domain';
+import { loadSnapshot } from '@/lib/data/access';
+import { servingsFor } from '@/lib/menu-cost';
+import { consumptionForSlot, drawFrom, applyReturn } from '@/lib/serving';
 
 const slotEnum = z.enum(SLOTS);
 
@@ -265,4 +268,130 @@ export async function copyDay(formData: FormData): Promise<void> {
 
   revalidatePath(`/op/${parsed.data.operationId}/food/menu`);
   revalidatePath(`/op/${parsed.data.operationId}/food/shopping`);
+}
+
+// --- Serving -----------------------------------------------------------------
+
+const servedSchema = z.object({
+  operationId: z.string().uuid(),
+  day: z.string().min(1),
+  slot: slotEnum,
+});
+
+/**
+ * Marks a meal served and draws the ingredients out of the pantry.
+ *
+ * Idempotent: a slot already marked served is left alone, so a double tap on a
+ * phone cannot deduct twice. The servings count is snapshotted so that undoing
+ * reverses exactly the amount that was taken.
+ */
+export async function markSlotServed(formData: FormData): Promise<void> {
+  const parsed = servedSchema.safeParse({
+    operationId: formData.get('operationId'),
+    day: formData.get('day'),
+    slot: formData.get('slot'),
+  });
+  if (!parsed.success) return;
+  const session = await requireSession();
+  await requireOpAccess(parsed.data.operationId, session);
+
+  const db = getDb();
+  const slotRows = await db.select().from(schema.menuSlots).where(and(
+    eq(schema.menuSlots.operationId, parsed.data.operationId),
+    eq(schema.menuSlots.day, parsed.data.day),
+    eq(schema.menuSlots.slot, parsed.data.slot),
+  )).limit(1);
+  const slot = slotRows[0];
+  if (slot === undefined || slot.servedAt !== null) return;   // already served
+
+  const snapshot = await loadSnapshot(parsed.data.operationId, session);
+  const view = snapshot.menu.find((m) => m.id === slot.id);
+  if (view === undefined) return;
+
+  const { servings } = servingsFor(view, snapshot.volunteers, snapshot.operation);
+  if (servings <= 0) return;
+
+  const lines = consumptionForSlot(
+    view.items.map((i) => i.recipeId).filter((r): r is string => r !== null),
+    snapshot.recipes.map((r) => ({
+      id: r.id,
+      name: r.name,
+      ingredients: r.ingredients.map((i) => ({ ingredientId: i.ingredientId, qtyPerServing: i.qtyPerServing })),
+    })),
+    servings,
+  );
+
+  // Record what actually came out, not what the recipe asked for — see
+  // drawFrom. Undo replays this list, so it can never hand back more than the
+  // pantry supplied.
+  const stockById = new Map(snapshot.ingredients.map((i) => [i.id, i.haveOnHand]));
+  const actualDraws: { ingredientId: string; qty: number }[] = [];
+  for (const line of lines) {
+    const have = stockById.get(line.ingredientId);
+    if (have === undefined) continue;
+    const { remaining, drawn } = drawFrom(have, line.qty);
+    actualDraws.push({ ingredientId: line.ingredientId, qty: drawn });
+    if (drawn === 0 && remaining === have) continue;   // nothing to write
+    await db.update(schema.ingredients)
+      .set({ haveOnHand: String(remaining) })
+      .where(and(
+        eq(schema.ingredients.id, line.ingredientId),
+        eq(schema.ingredients.operationId, parsed.data.operationId),
+      ));
+  }
+
+  await db.update(schema.menuSlots)
+    .set({ servedAt: new Date(), servedServings: servings, servedDraws: actualDraws })
+    .where(eq(schema.menuSlots.id, slot.id));
+
+  revalidatePath(`/op/${parsed.data.operationId}/food/menu`);
+  revalidatePath(`/op/${parsed.data.operationId}/food/shopping`);
+  revalidatePath(`/op/${parsed.data.operationId}/food/recipes`);
+}
+
+/** Reverses a serving, returning exactly what was drawn. */
+export async function markSlotUnserved(formData: FormData): Promise<void> {
+  const parsed = servedSchema.safeParse({
+    operationId: formData.get('operationId'),
+    day: formData.get('day'),
+    slot: formData.get('slot'),
+  });
+  if (!parsed.success) return;
+  const session = await requireSession();
+  await requireOpAccess(parsed.data.operationId, session);
+
+  const db = getDb();
+  const slotRows = await db.select().from(schema.menuSlots).where(and(
+    eq(schema.menuSlots.operationId, parsed.data.operationId),
+    eq(schema.menuSlots.day, parsed.data.day),
+    eq(schema.menuSlots.slot, parsed.data.slot),
+  )).limit(1);
+  const slot = slotRows[0];
+  if (slot === undefined || slot.servedAt === null) return;
+
+  // Replay exactly what was taken. Recomputing from the recipe would return
+  // more than the pantry gave when stock was short, inventing stock.
+  const draws = slot.servedDraws ?? [];
+  const current = await db.select().from(schema.ingredients)
+    .where(eq(schema.ingredients.operationId, parsed.data.operationId));
+  const stockById = new Map(current.map((i) => [i.id, Number(i.haveOnHand)]));
+
+  for (const draw of draws) {
+    const have = stockById.get(draw.ingredientId);
+    if (have === undefined || draw.qty <= 0) continue;
+    await db.update(schema.ingredients)
+      .set({ haveOnHand: String(applyReturn(have, draw.qty)) })
+      .where(and(
+        eq(schema.ingredients.id, draw.ingredientId),
+        eq(schema.ingredients.operationId, parsed.data.operationId),
+      ));
+  }
+
+  await db.update(schema.menuSlots)
+    .set({ servedAt: null, servedServings: null, servedDraws: null })
+    .where(eq(schema.menuSlots.id, slot.id));
+
+  revalidatePath(`/op/${parsed.data.operationId}/food/menu`);
+  revalidatePath(`/op/${parsed.data.operationId}/food/shopping`);
+  revalidatePath(`/op/${parsed.data.operationId}/food/recipes`);
 }

@@ -79,12 +79,27 @@ await step('THE failure this prevents: boots are not ordered daily', async () =>
   }
 
   // And across the whole operation: one pair per person, not one per person per day.
+  // Derive the expected figure from the roster rather than hard-coding it —
+  // other suites add volunteers, and a per-deployment item is one per person
+  // however many that is.
+  const roster = await page.evaluate(async (url) => {
+    const r = await fetch(url, { credentials: 'include' });
+    return (await r.text()).trim().split('\n').length - 1;
+  }, `${BASE}/api/op/${OP}/roster.csv`);
+
   const whole = await cardText(/whole operation/i);
   const w = whole.split('\n');
   const j = w.findIndex((l) => /steel-toe boots/i.test(l));
   const totals = w.slice(j, j + 3).join(' ');
-  if (!/\b50 pair\b/.test(totals)) throw new Error(`expected 50 pair for 50 people, got: ${totals}`);
-  return '50 pair total for 50 people, not 50 x days';
+  const pair = totals.match(/(\d+)\s*pair/);
+  if (pair === null) throw new Error(`no boot total found: ${totals}`);
+  const ordered = Number(pair[1]);
+  if (ordered !== roster) {
+    throw new Error(`expected one pair per person (${roster}), got ${ordered}`);
+  }
+  const days = 7;
+  if (ordered >= roster * days) throw new Error('boots appear to be charged daily');
+  return `${ordered} pair for ${roster} people, not ${roster} x days`;
 });
 
 await step('single-use items DO scale with the day headcount', async () => {
@@ -102,10 +117,11 @@ await step('sized items break down by size, unknowns kept separate', async () =>
 
 await step('setting stock produces a shortfall and an order-by date', async () => {
   const row = card(/whole operation/i).locator('tr').filter({ hasText: 'Nitrile gloves' }).first();
-  const input = row.locator('input[name=stockOnHand]');
-  await input.fill('40');
-  await row.locator('button:has-text("Set")').click();
-  await page.waitForTimeout(2500);
+  // Stock is adjusted by amount now; an absolute recount is behind "Counted it".
+  await row.locator('button:has-text("Counted it")').click();
+  await row.locator('input[name=stockOnHand]').fill('40');
+  await row.locator('button:has-text("Set total")').click();
+  await page.waitForTimeout(3000);
   const whole = await cardText(/whole operation/i);
   const lines = whole.split('\n');
   const i = lines.findIndex((l) => /nitrile gloves/i.test(l));

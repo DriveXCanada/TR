@@ -59,6 +59,8 @@ export interface MenuSlotView {
   readonly day: string;
   readonly slot: Slot;
   readonly servings: number | null;
+  readonly servedAt: Date | null;
+  readonly servedServings: number | null;
   readonly items: readonly { id: string; recipeId: string | null; adHocName: string | null }[];
 }
 
@@ -240,6 +242,7 @@ export async function loadSnapshot(operationId: string, session: SessionPayload)
     })).sort((a, b) => a.name.localeCompare(b.name)),
     menu: menuRows.map((m) => ({
       id: m.id, day: m.day, slot: m.slot, servings: m.servings,
+      servedAt: m.servedAt, servedServings: m.servedServings,
       items: itemsBySlot.get(m.id) ?? [],
     })),
     demands: demandRows.map((d) => ({ icsRole: d.icsRole, day: d.day, target: d.target })),

@@ -6,7 +6,7 @@ import { SLOTS, SEVERITY_RANK, type Slot } from '@/lib/domain';
 import { costMenu, offerableRecipes, servingsFor } from '@/lib/menu-cost';
 import { budgetSummary } from '@/lib/budget';
 import { checkConflicts } from '@/lib/conflict';
-import { addDish, removeDish, setServings } from '@/lib/actions/menu';
+import { addDish, removeDish, setServings, markSlotServed, markSlotUnserved } from '@/lib/actions/menu';
 import { SlotSelector } from '@/components/SlotSelector';
 import { Card, Stat, SeverityChip, money } from '@/components/ui';
 import { WeekOverview } from './WeekOverview';
@@ -111,6 +111,37 @@ export default async function MenuPage(
                 {[...new Set(severe.map((c) => `${c.volunteerName} (${c.tag})`))].join(', ')}
               </p>
             )}
+
+            {(() => {
+              const stored = menu.find((m) => m.day === day && m.slot === slot);
+              const served = stored?.servedAt ?? null;
+              if ((slotCost?.dishes ?? []).length === 0 && served === null) return null;
+              return served !== null ? (
+                <div className="mb-3 flex flex-wrap items-center justify-between gap-2 rounded border border-ok-border bg-ok-bg p-2">
+                  <span className="text-sm text-ok">
+                    Served · {stored?.servedServings ?? 0} portions drawn from the pantry
+                  </span>
+                  <form action={markSlotUnserved}>
+                    <input type="hidden" name="operationId" value={id} />
+                    <input type="hidden" name="day" value={day} />
+                    <input type="hidden" name="slot" value={slot} />
+                    <button type="submit" className="btn-secondary px-2 py-1 text-xs">Undo</button>
+                  </form>
+                </div>
+              ) : (
+                <form action={markSlotServed} className="mb-3">
+                  <input type="hidden" name="operationId" value={id} />
+                  <input type="hidden" name="day" value={day} />
+                  <input type="hidden" name="slot" value={slot} />
+                  <button type="submit" className="btn-primary" data-testid={`serve-${slot}`}>
+                    Mark {slot} served
+                  </button>
+                  <span className="ml-2 text-xs text-tr-grey">
+                    Takes the ingredients out of stock so the pantry stays roughly right without counting.
+                  </span>
+                </form>
+              );
+            })()}
 
             <ul className="mb-3 space-y-2">
               {(slotCost?.dishes ?? []).map((dish) => {

@@ -170,3 +170,40 @@ export async function loadKitTemplate(formData: FormData): Promise<void> {
 
   revalidatePath(`/op/${parsed.data.operationId}/logistics/inventory`);
 }
+
+const adjustSchema = z.object({
+  operationId: z.string().uuid(),
+  itemId: z.string().uuid(),
+  delta: z.string().trim(),
+});
+
+/**
+ * Adjusts stock by an amount rather than replacing the total.
+ *
+ * Receiving a delivery or writing off damaged kit is a change, not a recount —
+ * making someone work out the new total in their head is where the arithmetic
+ * errors come from.
+ */
+export async function adjustStock(formData: FormData): Promise<void> {
+  const parsed = adjustSchema.safeParse(Object.fromEntries(formData));
+  if (!parsed.success) return;
+  await assertMember(parsed.data.operationId);
+
+  const delta = Number(parsed.data.delta);
+  if (!Number.isFinite(delta) || delta === 0) return;
+
+  const db = getDb();
+  const rows = await db.select().from(schema.kitItems).where(and(
+    eq(schema.kitItems.id, parsed.data.itemId),
+    eq(schema.kitItems.operationId, parsed.data.operationId),
+  )).limit(1);
+  const item = rows[0];
+  if (item === undefined) return;
+
+  // Floor at zero: negative stock is not a fact about a store room.
+  const next = Math.max(0, Math.round((Number(item.stockOnHand) + delta + Number.EPSILON) * 100) / 100);
+  await db.update(schema.kitItems).set({ stockOnHand: String(next) })
+    .where(eq(schema.kitItems.id, item.id));
+
+  revalidatePath(`/op/${parsed.data.operationId}/logistics/inventory`);
+}
