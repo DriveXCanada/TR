@@ -5,6 +5,7 @@ import { loadSnapshot } from '@/lib/data/access';
 import { getDb, schema } from '@/lib/db';
 import { rotateKioskToken, updateSettings } from '@/lib/actions/settings';
 import { Card, money } from '@/components/ui';
+import { retentionStatus } from '@/lib/retention';
 import { PurgePanel } from './PurgePanel';
 import { TeamPanel, type Assignable, type TeamMember } from './TeamPanel';
 
@@ -91,6 +92,17 @@ export default async function SettingsPage(
           The day budget is this rate times the number of people on site that day — currently{' '}
           {money(operation.perPersonPerDay, operation.currency)} per person.
         </p>
+        {(() => {
+          const r = retentionStatus(operation.endDate, operation.retentionDays, new Date().toISOString().slice(0, 10));
+          return (
+            <p className={`mt-2 rounded border p-2 text-xs ${
+              r.due ? 'border-intolerance-border bg-intolerance-bg text-intolerance' : 'border-tr-line text-tr-grey'
+            }`}>
+              {r.summary} Volunteers are told this on the sign-in form, so it only holds if{' '}
+              <code>npm run db:purge</code> is scheduled — see PRIVACY.md.
+            </p>
+          );
+        })()}
       </Card>
 
       <Card title="Meal schedule">

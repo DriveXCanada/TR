@@ -95,6 +95,15 @@ fabricating a charity's mark misrepresents them. Replace it only with an
 official asset from Team Rubicon Canada, and remove the concept banner
 (`ConceptBanner` in `src/components/Brand.tsx`) only once the build is sanctioned.
 
+## Privacy and retention
+
+This application holds health data about identifiable people. See
+[PRIVACY.md](PRIVACY.md) for what is collected, who can read it, and how
+retention works. The volunteer-facing notice is served at `/privacy`.
+
+**Schedule `npm run db:purge`** (daily is fine). Without it the deletion promise
+made on the volunteer sign-in form is not kept.
+
 ## Known advisories
 
 `npm audit` reports build-time-only findings that cannot be cleared without a
