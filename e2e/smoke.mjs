@@ -176,6 +176,31 @@ await step('menu: planned dishes carry their conflict chips', async () => {
   return 'peanuts flagged on the packed lunch';
 });
 
+await step('menu: a warning says which ingredient caused it, and why', async () => {
+  // A bare "fish" on a beef chilli reads as a bug, and a warning people think
+  // is broken is a warning they stop reading. The chilli really does carry
+  // fish protein: Worcestershire sauce is made with anchovy.
+  await go(`/op/${OP}/food/menu?day=2026-03-02`);
+  await page.waitForSelector('#slot-supper');
+  const supper = await page.locator('#slot-supper').innerText();
+  if (!/fish/i.test(supper)) throw new Error('the fish risk in the chilli is not flagged at all');
+  if (!/worcestershire/i.test(supper)) throw new Error('warning does not name the ingredient that caused it');
+  if (!/anchovy/i.test(supper)) throw new Error('warning does not explain why that ingredient counts as fish');
+  if (!/Devon/i.test(supper)) throw new Error('warning does not name who is at risk');
+  return 'names the ingredient, the derivation and the person';
+});
+
+await step('menu: the dish name does not repeat a tag its ingredients already proved', async () => {
+  const supper = await page.locator('#slot-supper').innerText();
+  // "meat in Ground beef" is the real finding; "meat in Beef chilli" is the
+  // dish name restating it, and noise is what teaches people to skim.
+  if (/meat in Beef chilli/i.test(supper)) {
+    throw new Error('the dish name is repeating a tag already proved by an ingredient');
+  }
+  if (!/meat in Ground beef/i.test(supper)) throw new Error('lost the real meat finding');
+  return 'one line per reason';
+});
+
 await step('shopping: consolidates, prices and compares to budget', async () => {
   await go(`/op/${OP}/food/shopping`);
   await page.waitForSelector('main');

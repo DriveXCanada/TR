@@ -3,14 +3,15 @@ import { requireSession } from '@/lib/auth/current';
 import { loadSnapshot } from '@/lib/data/access';
 import { resolveSelection } from '@/lib/view-params';
 import { daysBetween, crewForSlot } from '@/lib/presence';
-import { SLOTS, SEVERITY_RANK, type Slot } from '@/lib/domain';
+import { SLOTS, type Slot } from '@/lib/domain';
 import { costMenu, offerableRecipes, servingsFor } from '@/lib/menu-cost';
 import { budgetSummary } from '@/lib/budget';
-import { checkConflicts } from '@/lib/conflict';
+import { checkDish, checkDishes } from '@/lib/conflict';
+import { ConflictLines } from '@/components/ConflictLines';
 import { addDish, removeDish, setServings, markSlotServed, markSlotUnserved } from '@/lib/actions/menu';
 import { SlotSelector } from '@/components/SlotSelector';
 import { MealJump } from '@/components/MealJump';
-import { Card, Stat, SeverityChip, money } from '@/components/ui';
+import { Card, Stat, money } from '@/components/ui';
 import { WeekOverview } from './WeekOverview';
 import { CopyDayForm, StarterLibraryButton } from './DayTools';
 
@@ -102,11 +103,13 @@ export default async function MenuPage(
 
         // Conflicts for what is actually planned into this slot, against the
         // crew actually in the line for it.
-        const plannedIngredients = (slotCost?.dishes ?? []).flatMap((d) => {
+        const plannedDishes = (slotCost?.dishes ?? []).map((d) => {
           const r = d.recipeId === null ? undefined : recipeById.get(d.recipeId);
-          return r === undefined ? [d.name] : [r.name, ...r.ingredients.map((i) => i.name)];
+          return r === undefined
+            ? { name: d.name, ingredients: [] }
+            : { name: r.name, ingredients: r.ingredients.map((i) => i.name) };
         });
-        const report = checkConflicts(plannedIngredients, crew);
+        const report = checkDishes(plannedDishes, crew);
         const severe = report.conflicts.filter((c) => c.severity === 'severe');
 
         return (
@@ -121,10 +124,13 @@ export default async function MenuPage(
             }
           >
             {severe.length > 0 && (
-              <p role="alert" className="mb-3 rounded-md border-2 border-severe-border bg-severe-bg p-2 text-sm font-semibold text-severe">
-                ▲ {severe.length} SEVERE conflict{severe.length === 1 ? '' : 's'} with what is planned here:{' '}
-                {[...new Set(severe.map((c) => `${c.volunteerName} (${c.tag})`))].join(', ')}
-              </p>
+              <div role="alert" className="mb-3 rounded-md border-2 border-severe-border bg-severe-bg p-2">
+                <p className="text-sm font-semibold text-severe">
+                  ▲ {new Set(severe.map((c) => c.volunteerId)).size} SEVERE
+                  {' '}conflict{new Set(severe.map((c) => c.volunteerId)).size === 1 ? '' : 's'} with what is planned here
+                </p>
+                <ConflictLines conflicts={severe} />
+              </div>
             )}
 
             {(() => {
@@ -161,19 +167,15 @@ export default async function MenuPage(
             <ul className="mb-3 space-y-2">
               {(slotCost?.dishes ?? []).map((dish) => {
                 const recipe = dish.recipeId === null ? undefined : recipeById.get(dish.recipeId);
-                const dishConflicts = recipe === undefined ? [] : [...checkConflicts(
-                  [recipe.name, ...recipe.ingredients.map((i) => i.name)], crew,
-                ).conflicts].sort((a, b) => SEVERITY_RANK[a.severity] - SEVERITY_RANK[b.severity]);
+                const dishConflicts = recipe === undefined ? [] : checkDish(
+                  recipe.name, recipe.ingredients.map((i) => i.name), crew,
+                ).conflicts;
                 return (
                   <li key={dish.id} className="flex flex-wrap items-center justify-between gap-2 rounded-md border border-tr-line p-2">
                     <div>
                       <span className="font-medium text-tr-white">{dish.name}</span>
                       <span className="ml-2 text-xs text-tr-grey">{money(dish.cost, operation.currency)}</span>
-                      <div className="mt-1 flex flex-wrap gap-1">
-                        {[...new Map(dishConflicts.map((c) => [`${c.severity}-${c.tag}`, c])).values()].map((c) => (
-                          <SeverityChip key={`${c.severity}-${c.tag}`} severity={c.severity}>{c.tag}</SeverityChip>
-                        ))}
-                      </div>
+                      <ConflictLines conflicts={dishConflicts} />
                     </div>
                     <form action={removeDish}>
                       <input type="hidden" name="operationId" value={id} />

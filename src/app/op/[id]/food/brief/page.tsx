@@ -5,7 +5,8 @@ import { crewForSlot, peoplePresentOnDay, presenceWarnings, daysBetween } from '
 import { SEVERITY_RANK, SLOTS, ICS_ROLES, type Severity } from '@/lib/domain';
 import { dailyBudget } from '@/lib/budget';
 import { costMenu } from '@/lib/menu-cost';
-import { checkConflicts } from '@/lib/conflict';
+import { checkDishes } from '@/lib/conflict';
+import { conflictSentences } from '@/components/ConflictLines';
 import { SlotSelector } from '@/components/SlotSelector';
 import { PrintButton } from '@/components/PrintButton';
 import { PrintHeader } from '@/components/PrintHeader';
@@ -160,11 +161,12 @@ export default async function BriefPage(
                 const planned = today?.slots.find((s) => s.slot === slot);
                 const dishes = planned?.dishes ?? [];
                 const crew = crewForSlot(volunteers, day, slot, operation.mealSchedule);
-                const plannedIngredients = dishes.flatMap((d) => {
+                const conflicts = checkDishes(dishes.map((d) => {
                   const r = d.recipeId === null ? undefined : recipeById.get(d.recipeId);
-                  return r === undefined ? [d.name] : [r.name, ...r.ingredients.map((i) => i.name)];
-                });
-                const conflicts = checkConflicts(plannedIngredients, crew).conflicts;
+                  return r === undefined
+                    ? { name: d.name, ingredients: [] }
+                    : { name: r.name, ingredients: r.ingredients.map((i) => i.name) };
+                }), crew).conflicts;
                 const severe = conflicts.filter((c) => c.severity === 'severe');
 
                 return (
@@ -185,7 +187,7 @@ export default async function BriefPage(
                     )}
                     {severe.length > 0 && (
                       <p className="mt-2 rounded border border-severe-border bg-severe-bg px-2 py-1 text-sm font-semibold text-severe">
-                        HOLD — {[...new Set(severe.map((c) => `${c.volunteerName} (${c.tag})`))].join(', ')}
+                        HOLD — {conflictSentences(severe).join('; ')}
                       </p>
                     )}
                   </div>
