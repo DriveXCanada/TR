@@ -50,9 +50,24 @@ await step('a planned meal offers a Serve control', async () => {
 });
 
 let before = null;
+await step('stock the pantry so a drawdown can be observed', async () => {
+  // A fresh operation ships no stock on hand, and the app refuses to draw more
+  // than it has. Put oats in the pantry first, or this suite would be asserting
+  // against an empty shelf and prove nothing.
+  await go(`/op/${OP}/food/shopping`);
+  await page.waitForSelector('text=/purchase cost/i');
+  const field = page.getByLabel(/have on hand: rolled oats/i).first();
+  if (await field.count() === 0) throw new Error('no stock field for Rolled oats on the shopping list');
+  await field.fill('9000');
+  await Promise.all([page.waitForLoadState('domcontentloaded'), field.press('Enter')]);
+  await page.waitForTimeout(3000);
+  return '9000 g of oats on hand';
+});
+
 await step('record the pantry before serving', async () => {
   before = await oatsRow();
   if (before === null || before === '') throw new Error('could not read the oats row');
+  if (!/9000/.test(before)) throw new Error(`stock did not save: ${before.slice(0, 80)}`);
   return before.slice(0, 70);
 });
 

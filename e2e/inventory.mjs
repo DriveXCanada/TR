@@ -49,7 +49,9 @@ await step('an empty kit list offers standard loadouts rather than a blank page'
 
 await step('loading the chainsaw loadout populates the kit list', async () => {
   await page.click('[data-testid=load-chainsaw]');
-  await page.waitForSelector('text=/needed on/i', { timeout: 30000 });
+  // "needed on" is already on the page if another loadout was loaded first, so
+  // waiting for it proves nothing; wait for the item this loadout is named for.
+  await page.waitForSelector('text=/chainsaw chaps/i', { timeout: 30000 });
   const t = await main();
   if (!/chainsaw chaps/i.test(t)) throw new Error('chainsaw-specific PPE missing');
   if (!/steel-toe boots/i.test(t)) throw new Error('base PPE missing from the layered template');

@@ -25,7 +25,8 @@
     "test:e2e:serving": "node e2e/serving.mjs",
     "test:e2e:sizes": "node e2e/sizes.mjs",
     "test:watch": "vitest",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "test:e2e:recipes": "node e2e/recipes.mjs"
   },
   "engines": {
     "node": ">=20"

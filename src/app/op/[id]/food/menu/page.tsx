@@ -1,3 +1,4 @@
+import Link from 'next/link';
 import { requireSession } from '@/lib/auth/current';
 import { loadSnapshot } from '@/lib/data/access';
 import { resolveSelection } from '@/lib/view-params';
@@ -42,7 +43,10 @@ export default async function MenuPage(
         <Card title="Nothing to plan with yet" subtitle="This operation has no recipes or ingredients.">
           <p className="mb-4 text-sm text-tr-silver">
             The planner needs a recipe book before it can do anything. Load the standard field-kitchen
-            library to start planning immediately, or build your own from the <strong>Recipes</strong> tab.
+            library to start planning immediately, or{' '}
+            <Link href={`/op/${id}/food/recipes`} className="font-semibold text-tr-red-bright underline">
+              write your own recipes
+            </Link>.
           </p>
           <StarterLibraryButton operationId={id} recipeCount={0} />
         </Card>
@@ -72,6 +76,14 @@ export default async function MenuPage(
           {day} is over its daily budget by {money(today.cost - today.budget, operation.currency)}.
         </p>
       )}
+
+      <p className="text-sm text-tr-grey">
+        Dish not in the list?{' '}
+        <Link href={`/op/${id}/food/recipes`} className="font-semibold text-tr-red-bright underline">
+          Write a new recipe
+        </Link>{' '}
+        and it becomes selectable here.
+      </p>
 
       <Card title={`Roll ${day} forward`} subtitle="Plan one good day, then apply it across the operation.">
         <CopyDayForm operationId={id} fromDay={day} days={allDays} />

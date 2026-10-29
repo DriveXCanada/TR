@@ -15,6 +15,7 @@ const SECTIONS = {
       { href: '', label: 'Board' },
       { href: '/roster', label: 'Roster' },
       { href: '/menu', label: 'Menu' },
+      { href: '/recipes', label: 'Recipes' },
       { href: '/shopping', label: 'Shopping' },
       { href: '/check', label: 'Check' },
       { href: '/brief', label: 'Brief' },
