@@ -3,7 +3,6 @@ import { requireSession } from '@/lib/auth/current';
 import { loadSnapshot } from '@/lib/data/access';
 import { resolveSelection } from '@/lib/view-params';
 import { crewForSlot, peoplePresentOnDay, daysBetween } from '@/lib/presence';
-import { SLOTS } from '@/lib/domain';
 import { tallySizes, sizeCompleteness, SCHEMES, SIZE_SCHEMES } from '@/lib/sizes';
 import { splitKitAudience } from '@/lib/kit';
 import { SlotSelector } from '@/components/SlotSelector';
@@ -49,7 +48,7 @@ export default async function SizesPage(
           <p className="eyebrow text-tr-red-bright">Logistics</p>
           <h1 className="mt-1 text-2xl font-black uppercase text-tr-white">PPE sizes</h1>
         </div>
-        <SlotSelector days={days} slots={SLOTS} day={day} slot="supper" />
+        <SlotSelector days={days} day={day} />
       </header>
 
       <div className="grid gap-3 sm:grid-cols-4">

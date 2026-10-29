@@ -4,12 +4,23 @@ import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import type { Slot } from '@/lib/domain';
 
 /**
- * Day + slot selector. Drives every downstream view — board, conflicts,
+ * Day + meal selector. Drives every downstream view — board, conflicts,
  * headcount, menu and budget all filter through the selection, so it lives in
  * the URL and survives a refresh, a shared link and an offline reload.
+ *
+ * `slot` is optional. A page that reports on the whole day rather than one
+ * meal passes only `days` and `day`, and no meal buttons are drawn. They used
+ * to be drawn regardless, pinned to a hardcoded meal, so on those pages
+ * clicking one changed the URL, changed nothing on screen, and did not even
+ * move the highlight. A control that cannot act should not be offered.
  */
 export function SlotSelector(
-  { days, slots, day, slot }: { days: readonly string[]; slots: readonly Slot[]; day: string; slot: Slot },
+  { days, slots, day, slot }: {
+    days: readonly string[];
+    slots?: readonly Slot[];
+    day: string;
+    slot?: Slot;
+  },
 ): React.ReactNode {
   const router = useRouter();
   const pathname = usePathname();
@@ -30,6 +41,7 @@ export function SlotSelector(
           {days.map((d) => <option key={d} value={d}>{d}</option>)}
         </select>
       </label>
+      {slot !== undefined && slots !== undefined && (
       <div className="flex flex-wrap gap-1" role="group" aria-label="Meal">
         {slots.map((s) => (
           <button
@@ -44,6 +56,7 @@ export function SlotSelector(
           </button>
         ))}
       </div>
+      )}
     </div>
   );
 }

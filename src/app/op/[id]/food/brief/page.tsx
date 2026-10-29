@@ -81,7 +81,7 @@ export default async function BriefPage(
   return (
     <div className="space-y-5">
       <div className="no-print flex flex-wrap items-center justify-between gap-3">
-        <SlotSelector days={days} slots={SLOTS} day={day} slot="supper" />
+        <SlotSelector days={days} day={day} />
         <PrintButton />
       </div>
 

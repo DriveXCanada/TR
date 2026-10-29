@@ -9,6 +9,7 @@ import { budgetSummary } from '@/lib/budget';
 import { checkConflicts } from '@/lib/conflict';
 import { addDish, removeDish, setServings, markSlotServed, markSlotUnserved } from '@/lib/actions/menu';
 import { SlotSelector } from '@/components/SlotSelector';
+import { MealJump } from '@/components/MealJump';
 import { Card, Stat, SeverityChip, money } from '@/components/ui';
 import { WeekOverview } from './WeekOverview';
 import { CopyDayForm, StarterLibraryButton } from './DayTools';
@@ -56,7 +57,8 @@ export default async function MenuPage(
 
   return (
     <div className="space-y-6">
-      <SlotSelector days={days} slots={SLOTS} day={day} slot="supper" />
+      <SlotSelector days={days} day={day} />
+      <MealJump slots={SLOTS} />
 
       <Card title="The whole operation" subtitle="Every day and slot at a glance. Click a date to edit it.">
         <WeekOverview opId={id} days={costs} selectedDay={day} currency={operation.currency} />
@@ -108,8 +110,9 @@ export default async function MenuPage(
         const severe = report.conflicts.filter((c) => c.severity === 'severe');
 
         return (
+          // scroll-mt keeps the heading clear of the sticky operation nav.
+          <div key={slot} id={`slot-${slot}`} className="scroll-mt-24">
           <Card
-            key={slot}
             title={slot}
             subtitle={
               slot === 'lunch'
@@ -221,6 +224,7 @@ export default async function MenuPage(
               </p>
             </div>
           </Card>
+          </div>
         );
       })}
     </div>

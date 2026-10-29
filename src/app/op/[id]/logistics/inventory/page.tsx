@@ -2,7 +2,6 @@ import { requireSession } from '@/lib/auth/current';
 import { loadSnapshot } from '@/lib/data/access';
 import { resolveSelection } from '@/lib/view-params';
 import { daysBetween } from '@/lib/presence';
-import { SLOTS } from '@/lib/domain';
 import { needForDay, planItems, formatQty, splitKitAudience, ISSUE_POLICY_LABELS, KIT_CATEGORIES } from '@/lib/kit';
 import { KIT_TEMPLATES } from '@/lib/kit-templates';
 import { loadKitTemplate, updateKitItem, deleteKitItem } from '@/lib/actions/kit';
@@ -53,7 +52,7 @@ export default async function InventoryPage(
         </div>
         <div className="flex flex-wrap items-end gap-2">
           <PrintButton label="Print inventory" />
-          <SlotSelector days={days} slots={SLOTS} day={day} slot="supper" />
+          <SlotSelector days={days} day={day} />
         </div>
       </header>
 
